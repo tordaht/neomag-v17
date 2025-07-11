@@ -42,7 +42,7 @@ html, body {
     color: var(--text-primary);
     font-family: var(--font-family);
     font-size: var(--font-size-base);
-    cursor: url('/src/assets/cursor-circle.svg') 8 8, auto;
+    cursor: url('assets/cursor-circle.svg') 8 8, auto;
 }
 
 /* === ANA YAPI === */
