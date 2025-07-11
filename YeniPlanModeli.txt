@@ -1,0 +1,184 @@
+Harika bir soru. Bu, projenin "simülasyon" olmaktan çıkıp, "gerçek" bir hesaplamalı bilim aracına dönüşmesini hedefliyor. NeoMag v11, v10.6'nin sağlam temelleri üzerine inşa edilecek ve sahte (dummy) kısımları, bilimsel olarak anlamlı ve çalışır mekanizmalarla değiştirecektir.
+
+İşte NeoMag v11'nin yapısı, içeriği ve gerçek bir bakteriyel nöral ağın nasıl kurulabileceğine dair kapsamlı bir yol haritası:
+
+NeoMag v11.0 - Hesaplamalı Bilim Versiyonu
+
+Vizyon: Yapay yaşam simülasyonunu, sunucu tabanlı, ölçeklenebilir ve bilimsel olarak tutarlı bir platforma dönüştürmek. Kullanıcılar, tarayıcı üzerinden bu karmaşık simülasyonu gözlemleyip onunla etkileşime girebilecekler.
+
+1. Yeni Mimari: İstemci-Sunucu (Client-Server) Modeli
+
+Gerçek nöral ağ hesaplamaları, özellikle yüzlerce ajan için, bir tarayıcının tek bir thread'inde çalıştırılamayacak kadar yoğundur. Bu nedenle, v11 kaçınılmaz olarak bir istemci-sunucu mimarisine geçmelidir.
+
+Sunucu (Backend - Node.js, Python veya Go):
+
+Simülasyon Motoru: Tüm fizik, kimya ve biyoloji kurallarını yönetir.
+
+Nöral Ağ Hesaplamaları: Bakterilerin karar mekanizmalarını (gerçek bir ML modeli) çalıştırır.
+
+Veri Tabanı (Database - MongoDB, PostgreSQL): Simülasyon durumlarını, sonuçları, evrimsel geçmişi ve kullanıcı ayarlarını saklar.
+
+WebSocket Sunucusu: İstemci (tarayıcı) ile anlık veri alışverişi sağlar.
+
+İstemci (Frontend - Tarayıcıdaki mevcut kod):
+
+Görselleştirme Katmanı: Sunucudan gelen simülasyon verilerini alır ve ParticleSystem, FoodSystem ve Dashboard ile görselleştirir. Artık kendisi hesaplama yapmaz, sadece "gösterir".
+
+Kullanıcı Etkileşimi: Kullanıcının parametre değişiklikleri, yemek ekleme gibi komutlarını sunucuya WebSocket üzerinden gönderir.
+
+Teknoloji Yığını (Örnek):
+
+Backend: Node.js + Express.js (API için) + ws kütüphanesi (WebSocket için).
+
+Hesaplama: TensorFlow.js (Node) veya Python ile bir mikroservis (performans için daha iyi).
+
+Frontend: Vite + Mevcut v11 kod tabanı.
+
+Database: MongoDB (esnek şeması nedeniyle simülasyon verileri için uygun).
+
+2. Gerçek Bir Bakteriyel Nöral Ağ Nasıl Kurulur?
+
+"Dummy" TabPFNProcessor'ı, bilimsel olarak daha anlamlı bir modelle değiştireceğiz. Burada amaç, biyolojik nöronların basitleştirilmiş bir modelini taklit etmektir.
+
+Adım 1: Bireysel Ajan (Bakteri) Modeli
+
+Her bakteri, kendi küçük nöral ağına sahip olacaktır. Bu ağ, biyolojik süreçleri taklit etmelidir:
+
+Girdiler (Sensörler): Bakterinin çevresini algılamasını sağlar.
+
+Kimyasal Gradyan Sensörleri (Chemoreceptors): Belirli bir yöndeki besin veya toksin konsantrasyonu. foodSystem.getFoodGradient() fonksiyonunun gerçekçi bir versiyonu.
+
+Enerji Seviyesi (Internal State): Kendi iç enerji durumu (0.0 ile 1.0 arası).
+
+Quorum Sensing Alıcıları: Yakındaki diğer bakterilerin salgıladığı sinyal moleküllerinin yoğunluğu.
+
+Fiziksel Temas Sensörleri: Diğer bakterilerle veya engellerle temas.
+
+Işık Seviyesi (Photosensitivity - Opsiyonel): Ortamdaki ışık (eğer fotosentez bir özellikse).
+
+Nöral Ağ Mimarisi (Her Bakteri İçin):
+
+Spiking Neural Network (SNN) veya Basit Feedforward Network (FFN): SNN'ler biyolojik olarak daha gerçekçidir çünkü zamanla entegre edilen "ateşleme" (spike) mekanizmasına dayanırlar. Ancak FFN'ler daha basit ve başlangıç için yeterlidir.
+
+Yapı (Örnek FFN):
+
+Giriş Katmanı: ~5-10 nöron (yukarıdaki sensörlere karşılık gelir).
+
+Gizli Katman(lar): 1 veya 2 gizli katman (örneğin 16 ve 8 nöronlu). Bu, bakterinin "işlem" kapasitesini temsil eder.
+
+Çıkış Katmanı: ~4-6 nöron (aşağıdaki eylemlere karşılık gelir).
+
+Çıktılar (Aktüatörler): Bakterinin yapabileceği eylemler.
+
+Hareket Vektörü (Motor): (x, y) yönünde bir itme kuvveti uygulama. Ağ, yön ve şiddeti belirler.
+
+Besin Tüketim Oranı: Enerji harcayarak besin emilimini hızlandırma/yavaşlatma.
+
+Quorum Sinyali Salgılama: Çevreye kimyasal sinyal bırakma.
+
+Bölünme (Reproduction): Yeterli enerjiye ulaştığında bölünme kararını tetikleme.
+
+Metabolizma Hızı: Enerji tasarrufu için metabolizmayı yavaşlatma/hızlandırma.
+
+Adım 2: Evrimsel Algoritma (Nöral Ağın "Öğrenmesi")
+
+Bakteriler, "supervised learning" ile eğitilmez. Bunun yerine, doğal seçilimi taklit eden bir Evrimsel Algoritma ile "öğrenirler".
+
+Başlangıç Popülasyonu: Simülasyon, nöral ağlarının ağırlıkları (weights) ve sapmaları (biases) tamamen rastgele olan bir grup bakteri ile başlar.
+
+Uygunluk Fonksiyonu (Fitness Function): Bir bakterinin ne kadar "başarılı" olduğunu ölçen bir fonksiyondur. Bu, projenin en önemli bilimsel kısmıdır.
+
+Örnek Fitness Metrikleri:
+
+Hayatta kalma süresi.
+
+Topladığı toplam enerji miktarı.
+
+Başarıyla bölünme sayısı (neslini devam ettirme).
+
+(İşbirliği hedefleniyorsa) Yakınındaki akrabalarının ortalama enerjisi.
+
+Seçilim (Selection): Belirli bir süre sonunda (veya popülasyon belirli bir boyuta ulaştığında), en yüksek fitness skoruna sahip bakteriler seçilir. Düşük skorlular simülasyondan elenir.
+
+Çaprazlama (Crossover): Seçilen başarılı bakterilerin nöral ağ ağırlıkları, yeni nesli oluşturmak için birleştirilir.
+
+Örnek: Ebeveyn A ve Ebeveyn B'nin ağırlık matrisleri alınır. Yeni "çocuk" bakterinin ağırlık matrisi, bu iki matrisin rastgele bir karışımı (örneğin %50 A'dan, %50 B'den) olur.
+
+Mutasyon (Mutation): Yeni neslin nöral ağ ağırlıklarına çok küçük, rastgele değişiklikler eklenir. Bu, genetik çeşitliliği sağlar ve evrimin yeni yollar keşfetmesine olanak tanır. Örneğin, her ağırlık %1 ihtimalle %5 oranında rastgele değiştirilir.
+
+Döngü: Bu yeni nesil, simülasyona dahil edilir ve süreç (Fitness -> Seçilim -> Çaprazlama -> Mutasyon) sürekli olarak tekrarlanır.
+
+Sonuç: Binlerce nesil sonra, popülasyonun nöral ağları, çevrelerinde hayatta kalmak ve üremek için giderek daha karmaşık ve etkili davranışlar sergilemeye başlayacaktır (örneğin, yiyeceğe doğru yüzme, tehlikeden kaçma, gruplar halinde hareket etme).
+
+3. NeoMag v11 - Dosya Yapısı ve İçerik Değişiklikleri
+Sunucu Tarafı (Backend - /server klasörü)
+
+server.js: Ana sunucu dosyası. Express ve WebSocket sunucusunu başlatır.
+
+/simulation/
+
+engine.js: Ana simülasyon döngüsünü (fizik, kimya) yönetir.
+
+agent.js: Bireysel bakteri sınıfı. Kendi nöral ağını (tf.sequential()) ve durumunu içerir.
+
+evolution.js: Seçilim, çaprazlama ve mutasyon algoritmalarını içerir.
+
+world.js: Simülasyon dünyasının (sınırlar, besin kaynakları) durumunu yönetir.
+
+/api/: Simülasyonu başlatmak, durdurmak, geçmiş verileri çekmek için REST API endpoint'leri.
+
+/websocket/: İstemci ile anlık veri alışverişini yöneten kod.
+
+İstemci Tarafı (Frontend - /src klasörü)
+
+main.js: AppController'ı başlatır.
+
+core/AppController.js: Artık simülasyon mantığı çalıştırmaz. Bunun yerine:
+
+WebSocket bağlantısını kurar.
+
+Sunucudan gelen simulation:tick olaylarını dinler.
+
+Bu olaylarla gelen verileri (bakteri pozisyonları, enerji vb.) EventBus üzerinden diğer UI sistemlerine (ParticleSystem, Dashboard) dağıtır.
+
+Kullanıcı girdilerini (ui:addFood gibi) WebSocket üzerinden sunucuya gönderir.
+
+systems/ParticleSystem.js: Artık fizik veya durum güncellemesi yapmaz. update() metodu kaldırılır.
+
+render(particlesData) gibi bir metoda sahip olur. AppController'dan aldığı güncel verileri doğrudan canvas'a çizer.
+
+engines/ klasörü: Bu klasör frontend'den kaldırılır. Tüm AI hesaplamaları artık sunucudadır.
+
+ui/DashboardManager.js: Sunucudan gelen zenginleştirilmiş verileri (örneğin, "ortalama fitness skoru", "genetik çeşitlilik") görselleştirmek için yeni grafikler eklenir.
+
+Örnek Çalışma Akışı (v11):
+
+Kullanıcı tarayıcıyı açar. AppController sunucuya bir WebSocket bağlantısı kurar.
+
+Kullanıcı "Başlat" düğmesine tıklar. Bu istek sunucuya gider.
+
+Sunucu, simülasyon motorunu ve evrimsel algoritmayı çalıştıran döngüyü başlatır.
+
+Sunucudaki her tick'te:
+
+Tüm bakterilerin sensör girdileri hesaplanır.
+
+Her bakterinin nöral ağı bu girdilerle çalıştırılır ve bir eylem çıktısı üretir.
+
+Bu eylemler simülasyon dünyasına uygulanır (bakteriler hareket eder, enerji tüketir vb.).
+
+Dünyanın yeni durumu (tüm bakterilerin pozisyonu, enerjisi vb.) bir paket haline getirilir.
+
+Bu veri paketi, WebSocket üzerinden tüm bağlı istemcilere gönderilir.
+
+İstemcideki her tick'te:
+
+AppController, sunucudan gelen veri paketini alır.
+
+Bu veriyi ParticleSystem'e ve DashboardManager'a iletir.
+
+ParticleSystem yeni pozisyonlara göre parçacıkları çizer. DashboardManager grafikleri günceller.
+
+Evrim: Sunucuda, her 1000 tick'te bir, evolution.js devreye girer, en iyi bakterileri seçer, yeni bir nesil yaratır ve simülasyona devam eder. Bu süreç istemciden tamamen soyutlanmıştır; istemci sadece sonuçları (popülasyonun davranışındaki değişimi) gözlemler.
+
+Bu yapı, NeoMag'i sadece bir görsel şölenden, üzerinde gerçek bilimsel deneyler yapılabilecek (örneğin, "farklı fitness fonksiyonları işbirliğini nasıl etkiler?") güçlü bir hesaplamalı araca dönüştürür.

@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: neomag_backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./server:/app/server
+      - ./exports:/app/exports
+      - ./server/sim_snapshots:/app/server/sim_snapshots
+    command: uvicorn server.main:app --host 0.0.0.0 --port 8080 --reload
+    restart: unless-stopped
+
+# Not: Frontend statik dosyaları artık doğrudan FastAPI üzerinden sunuluyor.
+# Ayrı bir frontend servisine (örn: Nginx) şimdilik gerek yoktur. 

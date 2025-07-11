@@ -1,0 +1,43 @@
+# Hatalar ve Çözümleri v17.1
+
+Bu dosya, proje geliştirme sürecinde karşılaşılan önemli hataları, nedenlerini ve nihai çözümlerini belgelemek için kullanılır.
+
+---
+
+Proje: NeoMag
+Tarih: 2025-07-10
+Hata: Yüksek Ajan Sayılarında İstemci Donması ve Düşük FPS
+Konum: `src/core/AppController.js`, `src/systems/Renderer3D.js`
+Neden: Sunucudan gelen ilk büyük veri paketi (tüm ajanların durumu), istemcinin `requestAnimationFrame` döngüsünü tıkıyor, bu da arayüzün donmasına ve 3D tuvalin siyah kalmasına neden oluyordu.
+Çözüm: İstemci tarafında bir veri işleme kuyruğu (throttling/batching) mekanizması kuruldu. `AppController`, gelen WebSocket verilerini bir kuyruğa ekliyor ve `animate()` döngüsü içinde her karede bu kuyruktan belirli bir sayıda veriyi işliyor. Bu, büyük veri akışının render döngüsünü bloklamasını engeller.
+
+---
+
+Proje: NeoMag
+Tarih: 2025-07-10
+Hata: Statik Analiz (Pyright) Tip Hataları
+Konum: `server/simulation/world.py`
+Neden: 1) Harici `evolve_population` fonksiyonunun dönüş tipi belirsizdi. 2) `perf_monitor.get_metrics()` tek bir sözlük döndürürken, iki değişkene atanmaya çalışılıyordu, bu da tip çıkarımını bozuyordu.
+Çözüm:
+1.  `evolve_population` fonksiyonundan dönen veri, `world.py` içinde `isinstance(entity, Agent)` ile manuel olarak doğrulandı.
+2.  `get_statistics` metodu, `get_metrics()` ve `get_average_metrics()` fonksiyonlarını ayrı ayrı çağıracak şekilde düzeltildi.
+
+---
+
+Proje: NeoMag
+Tarih: 2025-07-09
+Hata: Yavaş Yükleme Süresi ve `TypeError: Cannot read properties of null (reading 'setUsage')`
+Konum: `src/core/AppController.js`, `src/systems/Renderer3D.js`
+Neden: 1) Ağır kütüphaneler (`Plotly.js`) render'ı blokluyordu. 2) `InstancedMesh.instanceColor` özelliğine, `three.js` tarafından oluşturulmadan önce erişilmeye çalışılıyordu.
+Çözüm:
+1.  **Performans:** Ağır bileşenler `async/await` ve dinamik `import()` ile "tembel yüklendi" (lazy loading).
+2.  **Render Hatası:** `instanceColor` buffer'ı, `InstancedMesh` oluşturulduktan hemen sonra manuel olarak yaratıldı (`new THREE.InstancedBufferAttribute(...)`).
+
+---
+
+Proje: NeoMag
+Tarih: 2025-07-09
+Hata: Sunucuda WebSocket Bağlantı Kopmalarında Yarış Durumu (Race Condition)
+Konum: `server/main.py`
+Neden: Birden fazla coroutine, paylaşılan `active_connections` listesini aynı anda değiştirmeye çalışıyordu.
+Çözüm: `ConnectionManager` sınıfı içinde paylaşılan listeye erişim, `asyncio.Lock` kullanılarak atomik hale getirildi. 

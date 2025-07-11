@@ -1,0 +1,66 @@
+# Kilit dosyaları
+*.lock
+
+# Log dosyaları
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Bağımlılık dizinleri
+/node_modules
+/venv
+/server/venv
+
+# Build çıktıları
+/build
+/dist
+
+# IDE ve editör dosyaları
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# İşletim sistemi dosyaları
+.DS_Store
+Thumbs.db
+
+# Snapshot ve export klasörleri
+/server/sim_snapshots/
+/server/exports/
+/exports/
+
+# Pycache
+__pycache__/
+*.pyc
+
+# Raporlar ve geçici dosyalar
+/temp_dataset_repo/
+*.csv
+*.json
+# MD dosyalarını hariç tutma, onlar kalsın
+# *.md
+*.txt
+*.html
+
+# Ancak belirli dosyaları dahil et
+!*.md
+!*.txt
+!*.html
+!/src/style.css
+!/src/main.js
+!/index.html
+!/urun_sunumu.html
+!/static/urun_sunumu.css
+!/server/datasets/population.csv
+!HATA_COZUMLERI.txt
+!Gorev_Hedefi.md
+!NeoMag_Proje_Raporu_v15.0.md
+!README.md
+!SISTEM_MIMARISI.md
+!DEPLOY.md
+!DEPENDENCIES.md
+!CICD_SURECLERI.md
+!BUG_LISTESI.md
+!arastirmalar/*.txt

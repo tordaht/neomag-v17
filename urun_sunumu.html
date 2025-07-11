@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoMag: Ürün Yapısı ve Bileşenler</title>
+    <link rel="stylesheet" href="/static/urun_sunumu.css">
+</head>
+<body>
+
+    <div class="container">
+        <header class="header">
+            <h1>NeoMag: Ürün Yapısı ve Bileşenler</h1>
+            <p>Ürünleştirme Departmanı İçin Teknik Olmayan Genel Bakış</p>
+        </header>
+
+        <main>
+            <section class="section">
+                <h2 class="section-title">Büyük Resim: NeoMag'in 3 Temel Katmanı</h2>
+                <div class="architecture-overview">
+                    <div class="layer-card">
+                        <h3>🧠 Beyin</h3>
+                        <p>Simülasyonun kalbi. Ajanların yaşadığı, öğrendiği, evrimleştiği ve tüm kararların alındığı Python tabanlı sanal dünya.</p>
+                    </div>
+                    <div class="layer-card">
+                        <h3>🔗 İletişim Omurgası</h3>
+                        <p>"Beyin" ile "Pencere" arasındaki köprü. Simülasyonu yönetir, komutları alır ve verileri güvenilir bir şekilde ön yüze iletir.</p>
+                    </div>
+                    <div class="layer-card">
+                        <h3>🖥️ Pencere</h3>
+                        <p>Kullanıcının simülasyonu gördüğü, etkileşimde bulunduğu ve kontrol ettiği yer. Tamamen kullanıcının tarayıcısında çalışır.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">Bileşenlerin Rolleri</h2>
+                <div class="component-grid">
+                    <div class="component-card">
+                        <span class="tag">BEYİN</span>
+                        <h4>world.py</h4>
+                        <p><b>Rolü:</b> Oyun Alanı Yöneticisi. Sanal dünyanın fizik kurallarını, zamanın akışını ve genel düzenini yönetir.</p>
+                    </div>
+                    <div class="component-card">
+                        <span class="tag">BEYİN</span>
+                        <h4>agent.py</h4>
+                        <p><b>Rolü:</b> Dijital Canlı DNA'sı. Her bir canlının genetik kodunu (DNA), anlık durumunu ve temel davranışlarını tanımlar.</p>
+                    </div>
+                    <div class="component-card">
+                        <span class="tag">BEYİN</span>
+                        <h4>evolution.py</h4>
+                        <p><b>Rolü:</b> Doğal Seçilim Motoru. Hangi canlıların hayatta kalıp üreyeceğini belirler ve yeni nesilleri yaratır.</p>
+                    </div>
+                    <div class="component-card">
+                        <span class="tag">OMURGA</span>
+                        <h4>main.py</h4>
+                        <p><b>Rolü:</b> Hava Trafik Kontrolü. Sunucuyu yönetir, istemciden gelen komutları alır ve simülasyona doğru şekilde iletir.</p>
+                    </div>
+                     <div class="component-card">
+                        <span class="tag">PENCERE</span>
+                        <h4>AppController.js</h4>
+                        <p><b>Rolü:</b> Genel Müdür (Frontend). Arayüzdeki tüm operasyonları yönetir. Sunucuyla konuşur ve diğer arayüz bileşenlerine ne yapacaklarını söyler.</p>
+                    </div>
+                    <div class="component-card">
+                        <span class="tag">PENCERE</span>
+                        <h4>Renderer3D.js</h4>
+                        <p><b>Rolü:</b> Sanatçı. Sunucudan gelen ham verileri alır ve ekrana güzel bir 3D görsel olarak çizer.</p>
+                    </div>
+                    <div class="component-card">
+                        <span class="tag">PENCERE</span>
+                        <h4>DashboardManager.js</h4>
+                        <p><b>Rolü:</b> Analist. Simülasyondan gelen istatistikleri alır ve kullanıcının anlayacağı canlı grafiklere dönüştürür.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2 class="section-title">Basitleştirilmiş Veri Akışı</h2>
+                <div class="diagram-container">
+                    <div class="mermaid">
+                    graph TD
+                        A[Kullanıcı 'Başlat'a Tıklar] --> B{AppController.js};
+                        B -->|sendMessage('set_pause')| C[WebSocket Bağlantısı];
+                        C --> D{Server/main.py};
+                        D -->|world.set_pause(false)| E[Simülasyon Çekirdeği];
+                        E -->|Her saniye| F[Durum Güncellemesi Üretir];
+                        F --> D;
+                        D -->|broadcast_json(durum)| C;
+                        C -->|onmessage| B;
+                        B --> G[EventBus];
+                        G --> H[Renderer3D.js - Görüntüyü Çizer];
+                        G --> I[DashboardManager.js - Grafikleri Günceller];
+
+                        style A fill:#e94560,stroke:#fff,stroke-width:2px,color:#fff
+                        style E fill:#0f3460,stroke:#fff,stroke-width:2px,color:#fff
+                        style I fill:#16213e,stroke:#fff,stroke-width:1px,color:#fff
+                        style H fill:#16213e,stroke:#fff,stroke-width:1px,color:#fff
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>NeoMag Ürün Mimarisi v1.0</p>
+        </footer>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                background: '#1a1a2e',
+                primaryColor: '#16213e',
+                secondaryColor: '#e94560',
+                primaryTextColor: '#dcdcdc',
+                secondaryTextColor: '#dcdcdc',
+                lineColor: '#58a6ff',
+                fontFamily: 'Poppins'
+            }
+        });
+    </script>
+</body>
+</html> 

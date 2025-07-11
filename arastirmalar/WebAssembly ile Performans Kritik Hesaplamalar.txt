@@ -1,0 +1,151 @@
+Harika. Web tabanlı bir bilimsel bakteri simülasyonu için performans optimizasyonuna yönelik, aşağıdaki teknolojilerin nasıl etkin şekilde kullanılabileceğine dair kapsamlı bir araştırma yapacağım:
+
+* WebAssembly ile hesaplama açısından kritik işlemlerin hızlandırılması
+* Worker Threads ile paralel işlem gücünün kullanılması
+* SharedArrayBuffer üzerinden çok iş parçacıklı veri paylaşımı
+* Service Workers ile arka planda hesaplama yapabilme
+* Progressive Web App (PWA) teknikleriyle çevrimdışı analiz kabiliyetleri
+
+Kod örnekleri, mimari öneriler ve hangi senaryoda neyin daha uygun olduğuna dair teknik öneriler de dahil edeceğim. Araştırmam tamamlandığında sana detaylı bir teknik özetle döneceğim.
+
+
+# WebAssembly ile Performans Kritik Hesaplamalar
+
+WebAssembly (WASM), modern tarayıcılarda **native seviyede performans** sunan, düşük seviyeli assembly-benzeri bir dildir. C/C++, Rust gibi dillerden derlenerek JS ile birlikte çalışabilir; örneğin Rust veya C++ ile yazılmış yoğun matematiksel hesaplamalar WASM’a dönüştürülerek **hesaplama süresi önemli ölçüde azaltılabilir**. WASM modülü derlemek için Rust için `wasm-pack` veya C/C++ için Emscripten/LLVM kullanılır. Örneğin Rust’da sayı yoğunluklu simülasyonu yazıp `cargo build --target wasm32-unknown-unknown` ile WASM’a çevirebiliriz. Tarayıcı desteği geniştir (Chrome, Firefox, Edge, Safari modern sürümleri).
+
+* **Dil seçimi:** Güvenlik ve bellek yönetimi için Rust, mevcut C/C++ kütüphanelerini kullanmak için ise Emscripten ile C++ tercih edilir.
+* **Mimari önerisi:** Kritik hesaplamalar WASM modüllerine taşınır; JavaScript ana iş parçacığı WASM fonksiyonlarını çağırır. Örneğin, kullanıcı etkileşimleri JS ile yapılırken fiziksel simülasyon çekirdeği WASM’da olabilir.
+* **Örnek kullanım:** Hücre sayımı, difüzyon veya kimyasal reaksiyon hesapları gibi yoğun döngüler Rust veya C++ ile yazılır, WASM modülü olarak yüklenir. JS tarafında şu şekilde yükleme yapılabilir:
+
+```js
+// main.js
+fetch('sim.dll.wasm')
+  .then(res => res.arrayBuffer())
+  .then(bytes => WebAssembly.instantiate(bytes, {}))
+  .then(({instance}) => {
+    const result = instance.exports.heavyCalc(param1, param2);
+    console.log("Simülasyon sonucu:", result);
+  });
+```
+
+* **Performans kazanımları:** WASM, JS’e göre çoğu sayısal iş yükünde daha öngörülebilir ve yüksek performanslıdır. WASM bellek (heap) sabit olduğundan, büyük veri yapılarını doğrudan bellekte işlemek mümkündür.
+* **Tuzaklar:** WASM dosya boyutu JS’den büyük olabilir; indirme ve başlatma gecikmesi yaşanabilir. Ayrıca, sık JS-WASM geçişleri maliyetli olabilir. Tarayıcıda multithreading kullanmak için *WebAssembly Threads* özelliği, `SharedArrayBuffer` ve Atomics ile birlikte çalışır.
+
+# Worker İş Parçacıkları ile Paralel Hesaplama
+
+**Web Workers**, JavaScript kodunu arka planda yeni bir iş parçacığında çalıştırmayı sağlar. Ana iş parçacığını bloke etmeden, hesaplamaları ayrı bir dosyada yapabiliriz. Bir `Worker` nesnesi şu şekilde oluşturulur ve mesajlaşma ile veri gönderilip alınır:
+
+```js
+// main.js - Ana iş parçacığı
+const worker = new Worker('worker.js');
+worker.postMessage({start: 0, end: 1000000});  // Çalışana veri gönder
+worker.onmessage = (e) => {
+  console.log("Worker sonucu:", e.data);
+};
+```
+
+```js
+// worker.js - İşçi kodu
+onmessage = function(e) {
+  const {start, end} = e.data;
+  let sum = 0;
+  for(let i = start; i < end; i++) { sum += i; }
+  postMessage(sum);  // Hesaplama bittiğinde ana iş parçacığına sonuç gönder
+};
+```
+
+* **Dedicated Worker:** Tek bir pencere veya betik tarafından kullanılır. Yani bu worker’ı yaratan kod dışında erişilemez.  Performans açısından, her worker yeni bir iş parçacığı açar; çok sayıda worker belleği artırabilir. Büyük veri setleri gönderilirken *transferable objects* (örneğin bir `ArrayBuffer`) ile kopyalamadan geçiş yapmak hız kazandırır.
+* **Shared Worker:** Aynı orijine sahip birden fazla pencere veya çerçeve tarafından paylaşılabilen bir worker’dır. Örneğin simülasyonu birden fazla sekmede aynı anda kullanıyorsanız, tek bir hesaplama kaynağını SharedWorker ile yönetebilirsiniz. Ancak Safari gibi bazı tarayıcılar SharedWorker’ı desteklemediği için uyumluluğa dikkat etmek gerekir. SharedWorker kullanımı şu şekildedir:
+
+```js
+// main.js (her iki sekme de bunu yapar)
+const shared = new SharedWorker('sharedCalc.js');
+shared.port.postMessage({task: 'step', value: 1});
+shared.port.onmessage = e => console.log('Paylaşılan worker:', e.data);
+```
+
+* **İş dağılımı senaryosu:** Simülasyon, geniş bir ortamda paralel çalıştırılabilir. Örneğin, bakteri ortamını alt bölgelere ayırıp her bölge için bir worker başlatabilir, sonuçları ana iş parçacığında birleştirebilirsiniz. Bir worker A, ortamın sol yarısını hesaplarken worker B sağ yarısını hesaplar. Çıktılar geldiğinde ana iş parçacığı birleştirme ve görselleştirme yapar.
+* **Tuzaklar:** Worker’lar DOM erişemez, veri aktarımı mesajlaşma ile olur. Büyük verinin gönderilmesi kopya oluşturur; çözümlerden biri `postMessage(buffer, [buffer])` ile aktarım yapmak. Ayrıca çok fazla worker sayısı, senkronizasyon zorlukları ve bellek tüketimi yaratabilir. Transfer edilemeyen nesnelere (örneğin fonksiyon) postMessage yapılamaz, sadece serileştirilebilir (structured clone) veri iletimini destekler.
+
+# SharedArrayBuffer ile Çok İş Parçacıklı Hesaplama
+
+`SharedArrayBuffer` (SAB), farklı iş parçacıkları arasında veri kopyalamadan ortak bellek paylaşıma izin verir. Bir SAB oluşturup paylaşıma açtığınızda, hem ana iş parçacığı hem de worker’lar aynı bellek bloğu üzerinde çalışabilir. Örneğin bir sabit dizi üzerinden paralel olarak toplama yapılabilir:
+
+```js
+// main.js
+const sab = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT * 100);
+const arr = new Int32Array(sab);
+arr[0] = 0;
+worker.postMessage(sab);  // SAB'ı worker'a gönder
+```
+
+```js
+// worker.js
+onmessage = function(e) {
+  const sharedArr = new Int32Array(e.data);
+  // Paylaşılan bellek üzerinde değişiklik yapalım
+  for(let i=1; i<sharedArr.length; i++) {
+    Atomics.add(sharedArr, 0, sharedArr[i]);  // Atomik ekleme
+  }
+  postMessage('Tamam');
+};
+```
+
+* **Atomics senkronizasyonu:** Farklı iş parçacıklarının çakışmasını önlemek için `Atomics` API’sı gerekir. Örneğin `Atomics.wait()` ile belirli bir değerin güncellenmesini bekleyebilir, `Atomics.store/add` ile sayı ekleyip okuyabilirsiniz. Atomics kullanımı dikkatli yapılmazsa **canlı döngü (busy wait)** veya performans darboğazı oluşabilir.
+* **Güvenlik & uyumluluk:** SAB, Spectre/Meltdown güvenlik açıkları nedeniyle özel bir izole ortamda kullanılabilir. Web sayfası **cross-origin izole** (COOP/COEP) olmalı; aksi takdirde `postMessage` ile SAB gönderimi yapılamaz. Bu HTTP başlıkları olmadan `SharedArrayBuffer` sınıfı bazı tarayıcılar tarafından engellenir. Yani uygulamanın, servis veya meta başlıkları ile izolasyon sağlaması gerekir.
+* **Performans etkisi:** Yapay kafalar oluşturmak yerine belleği direkt paylaştığı için, veri kopyalama maliyeti ortadan kalkar. Böylece büyük matrisler veya diziler üzerinde yüksek performanslı paralel hesaplama yapılır. Örneğin WebAssembly threads de dahili olarak paylaşılan `WebAssembly.Memory` kullanarak SAB üzerinden çoklu iş parçacığı çalıştırır.
+* **Tuzaklar:** İzolasyon gereksinimleri ve Atomics senkronizasyonunu unutmamak gerekir. Ayrıca SAB üzerinden paylaşım yaparken, işaretçi ataması yapılmaz; her iş parçacığı aynı fiziksel belleği görse de **herkes Atomics ile senkronize olmalıdır**. Yanlış kullanım çakışma ve bellek bütünlüğü sorunlarına yol açar.
+
+# Service Worker ile Arka Planda Hesaplamalar
+
+Service Worker (SW), tarayıcıda uygulama ve ağ arasına girebilen, olay odaklı bir iş parçacığıdır. Asenkron çalışır, sayfa kapanınca bile push ve arka plan senkronizasyon işlemlerini yönetebilir. SW’nin avantajları şunlardır: çevrimdışı deneyim, kaynak önbellekleme ve arka plan güncellemeleridir. Örneğin SW, simülasyon için gerekli büyük veri dosyalarını arka planda önbelleğe alabilir veya düşük bağlantılı durumlarda veriyi sunucuyla senkronize edebilir. Kod örneği:
+
+```js
+// service-worker.js
+self.addEventListener('install', event => {
+  // CSS, JS, WASM modülü gibi statik dosyaları önbelleğe ekle
+  event.waitUntil(
+    caches.open('sim-cache').then(cache => 
+      cache.addAll(['/index.html','/app.js','/sim_core.wasm'])
+    )
+  );
+});
+self.addEventListener('fetch', event => {
+  // Kaynak isteklerine önbellek-öncelikli cevap verme
+  event.respondWith(
+    caches.match(event.request)
+      .then(resp => resp || fetch(event.request))
+  );
+});
+```
+
+* **Arka plan avantajları:** SW’ler bildirimler (push), arka plan eşzamanlama ve veri önbellekleme gibi özellikler sunar. Örneğin, simülasyon sonuçlarını toplu olarak sunucuya gönderme (Background Sync) veya cihaz uyandığında veri güncellemeleri yapmak SW ile mümkün olabilir. Ayrıca birden fazla sekme aynı SW’yi kullanarak *tekilleştirilmiş* hesaplama verisi kullanabilir (örneğin, geolocation gibi pahalı hesaplamaları merkezi olarak güncelleme).
+* **Uygunluk:** Ancak Service Worker sürekli ağır matematiksel döngüler için uygun değildir. SW olay bazlı çalışır; uzun süreli işlem yaparken tarayıcı tarafından kapatılabilir. Bu nedenle karmaşık hesaplamalar için Web Worker ve WASM daha uygundur. SW, hesaplamadan ziyade **veri yönetimi ve ağ trafiği kontrolü** görevinde kullanılır. Yukarıdaki örnekte simülasyon çekirdeği SW yerine işçi iş parçacığında çalıştırılır, SW ise bu çekirdeğe ait dosyaları önbellekte tutar.
+* **Tuzaklar:** Service Worker’da DOM erişimi yoktur, sinyron XHR ve Web Storage kullanılamaz. SW’yi yalnızca HTTPS üzerinden, güvenli bağlamda çalıştırabilirsiniz. Ayrıca SW dinamik kodları (import()) kabul etmez. Performans tuzağı olarak, bir SW’nin yaşam süresi kısıtlıdır; uzun işlemler için `event.waitUntil()` ile sürdürülebilir, aksi halde beklenmedik şekilde durabilir.
+
+# Çevrimdışı Analiz için PWA Teknikleri
+
+Progressive Web App (PWA) özellikleri, simülasyonu çevrimdışı çalıştırma ve veri sunumu için kritik unsurlardır. **manifest.json** ile uygulamayı cihaz ana ekranında çalışacak şekilde kaydedebilir, simülasyon arayüzünü uygulama halinde sunabilirsiniz. Örneğin `manifest.json` içinde simülasyon adını, simgeyi ve başlangıç URL’sini belirleyerek (örn. `{ "name": "BakteriSim", "start_url": "/index.html", "icons": [...] }`) kullanıcı uygulamayı masaüstünde/kılıf olarak açtığında tam ekran deneyimi sağlarsınız.
+
+**Cache API** ve **IndexedDB**, çevrimdışı veri işleme ve saklama için kullanılır. Cache API ile JS, CSS, görüntü ve WebAssembly dosyalarını önbelleğe alarak uygulamayı çevrimdışına alabilirsiniz. Örneğin SW’de temel simülasyon kodları önbelleğe eklenebilir. **IndexedDB** ise simülasyon parametreleri, ara sonuçlar veya kullanıcı verisi gibi yapılandırılmış veriyi saklamak için uygundur. Örneğin her simülasyon çalışmasının sonucunu IndexedDB’de `results` adlı nesne deposunda saklayarak, kullanıcı çevrimdışıyken dahi geçmiş sonuçlara erişim sağlayabilirsiniz. Kod örneği:
+
+```js
+// IndexedDB örneği (main thread veya worker'da)
+const request = indexedDB.open('SimDB', 1);
+request.onupgradeneeded = e => {
+  const db = e.target.result;
+  db.createObjectStore('results', {keyPath: 'id'});
+};
+request.onsuccess = e => {
+  const db = e.target.result;
+  const tx = db.transaction('results', 'readwrite');
+  const store = tx.objectStore('results');
+  store.put({id: 1, data: simResult});  // simResult: hesaplama sonucu
+  return tx.complete;
+};
+```
+
+* **Çevrimdışı analiz akışı:** Uygulama ilk yüklendiğinde servis worker kurulur ve gerekli statik kaynaklar önbelleğe alınır. IndexedDB’de gerekli veri yapılarını oluşturulur. Kullanıcı verisi (örneğin başlangıç parametreleri) çevrimdışı bırakıldığında IndexedDB’ye kaydedilir. Hesaplama, Web Worker + WASM içindeki modüllerle yapılır. Sonuçlar hem ekranda gösterilir hem IndexedDB’ye kaydedilir. İnternet bağlandığında, SW içinde arka planda sonuçlar sunucuya gönderilebilir.
+* **Performans ve uyumluluk:** Cache API ve IndexedDB asenkron çalışır, bu sayede UI bloklanmaz. Uyumluluğa dikkat edilmeli: Cache ve IndexedDB modern tarayıcılarda desteklenir. Manifest ile PWA özellikleri Safari dahil çoğu mobil ve masaüstü tarayıcıda çalışır. Ancak eski tarayıcılarda PWA özellikleri sınırlı olabilir. Ayrıca **kota sınırlamaları** vardır; büyük veri setlerinde tarayıcı depolama sınırı aşılabilir. Uygulama açıldığında eski veri kontrolü ve güncelleme (örneğin Service Worker etkinleştiğinde `self.skipWaiting()` ile birikmiş cache temizleme) stratejileri uygulanmalıdır.
+
+**Özet:** Bu teknolojileri kullanarak simülasyonun **yüksek performans**, **paralellik** ve **çevrimdışı çalışma** gereksinimleri karşılanabilir. WASM ile hesaplama hızı artarken, Worker tabanlı paralellik ve SharedArrayBuffer ile çoklu çekirdekten yararlanılır. Service Worker ve PWA teknikleri ile arka planda veri yönetimi ve offline deneyim sağlanır.

@@ -1,0 +1,47 @@
+Proje Adı: NeoMag
+Versiyon: 12.0.0
+Analiz Tarihi: 09/07/2025
+
+## 1. Dizin ve Dosya Yapısı
+
+- **/server**: Sunucu tarafı kodları.
+  - **/venv**: Python sanal ortamı.
+  - **/simulation**: Simülasyonun çekirdek mantığı (Agent, World, Physics, Chemistry).
+  - **/api**: Gelecekteki REST API endpointleri.
+  - **/websocket**: WebSocket iletişim mantığı.
+  - **main.py**: FastAPI uygulamasının giriş noktası.
+- **/src**: İstemci tarafı kodları (Vite tabanlı).
+  - ... (Mevcut yapı büyük ölçüde aynı kalacak, sadece mantık çıkarılıp sunucuya bağlanacak)
+- **package.json**: İstemci tarafı bağımlılıkları (npm).
+- **...**
+
+## 2. Bağımlılıklar
+
+### Sunucu (Python - pip)
+- **fastapi**: Yüksek performanslı web framework'ü.
+- **uvicorn**: ASGI sunucusu.
+- **websockets**: WebSocket desteği için.
+- **numpy**: Temel sayısal işlemler için.
+- **cupy-cuda12x**: Fizik ve AI hesaplamalarını GPU'da hızlandırmak için.
+- **pytorch/tensorflow**: (Gelecek fazda) Nöral ağ modelleri için.
+
+### İstemci (JavaScript - npm)
+- **vite**: Modern frontend build aracı.
+- **uuid**: (Artık sunucuda) Benzersiz kimlikler için.
+- **...** (Diğer UI kütüphaneleri)
+
+## 3. Üst Düzey Mantık Akışı
+
+### Hedef Mimari (v12.0) - Python Sunucu
+
+`YeniPlanModeli.txt` ve son revizyonlar doğrultusunda, mimari istemci ve Python tabanlı bir sunucu olarak ikiye ayrılacaktır.
+
+1.  **Sunucu (Python - FastAPI & CuPy):**
+    *   Tüm ağır işleri yapar: Fizik motoru (CuPy ile GPU'da), kimyasal etkileşimler, AI karar mekanizmaları (toplu çıkarım ile GPU'da) ve evrimsel algoritma.
+    *   Simülasyonun durumunu yönetir.
+    *   WebSocket üzerinden istemcilere düzenli olarak güncel durumu (binary formatta, örn. Protobuf) yayınlar.
+2.  **İstemci (Tarayıcı):**
+    *   Sadece bir görselleştirme katmanıdır.
+    *   WebSocket üzerinden sunucudan gelen binary verileri alır ve ayrıştırır.
+    *   Gelen verileri kullanarak `ParticleSystem` ve `Dashboard` gibi UI bileşenlerini günceller.
+    *   Kullanıcı etkileşimlerini WebSocket üzerinden sunucuya komut olarak gönderir. 

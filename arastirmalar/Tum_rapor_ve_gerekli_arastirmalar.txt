@@ -1,0 +1,3910 @@
+Bakteriyel Genom-Fenotip Haritalama ve İletişim 
+Mekanizmalarının Simülasyonu 
+
+Bakteriyel simülasyonlarda genomik bilginin fenotipik özelliklere dönüştürülmesi ve bakteriler 
+arası iletişim mekanizmalarının modellenmesi, mikrobiyal ekosistemlerin gerçekçi simülasyonu için 
+kritik öneme sahiptir. Bu rapor, ikili (binary) genomik verilerin anlamlı fenotipik özelliklere 
+dönüştürülmesi ve bakteriyel iletişim mekanizmalarının simülasyona entegrasyonu için kapsamlı 
+bir çerçeve sunmaktadır. 
+Genom-Fenotip Haritalama Mekanizmaları 
+
+Bakteriyel genomların fenotipik özelliklere dönüştürülmesi, evrimsel simülasyonlarda gerçekçi 
+sonuçlar elde etmek için temel bir gerekliliktir. Bu dönüşüm için çeşitli yaklaşımlar mevcuttur. 
+Doğrusal ve Doğrusal Olmayan Haritalama Modelleri 
+
+Binary genomik dizilerin fenotipik özelliklere dönüştürülmesinde en basit yaklaşım, doğrusal 
+toplamsal modellerdir. Bu modellerde, belirli gen bölgeleri doğrudan spesifik fenotipik özelliklere 
+eşlenir. 
+def binary_to_decimal(binary_segment): 
+return int(binary_segment, 2) 
+def map_genome_to_phenotype(genome): 
+# Genomu bölgelere ayırma 
+speed_gene = genome[0:8] 
+size_gene = genome[8:16] 
+quorum_sensitivity_gene = genome[16:24] 
+# Basit doğrusal dönüşüm 
+speed = binary_to_decimal(speed_gene) / 255.0 * MAX_SPEED 
+size = binary_to_decimal(size_gene) / 255.0 * MAX_SIZE + MIN_SIZE 
+quorum_sensitivity = binary_to_decimal(quorum_sensitivity_gene) / 255.0 
+return speed, size, quorum_sensitivity 
+Ancak, gerçek biyolojik sistemlerde gen-fenotip ilişkisi genellikle doğrusal değildir. Gen 
+düzenleyici ağ benzeri yapılar daha gerçekçi sonuçlar üretebilir 
+[1] 
+.
+Gen Düzenleyici Ağ Modellemesi 
+
+Gen düzenleyici ağlar (GRN), genlerin birbirlerini nasıl etkilediğini modelleyen karmaşık yapılardır. 
+Bu yaklaşım, pleiotropi (bir genin birden fazla fenotipi etkilemesi) ve epistatisi (genlerin etkileşimli 
+etkisi) modelleyebilir. 
+def grn_based_phenotype_mapping(genome): 
+# Genomu genlere bölme 
+genes = [genome[i:i+8] for i in range(0, len(genome), 8)] 
+# GRN ağırlık matrisi oluşturma 
+weights = np.zeros((len(genes), len(genes))) 
+for i in range(len(genes)): 
+for j in range(len(genes)): 
+if i != j: 
+weights[i][j] = (int(genes[i], 2) ^ int(genes[j], 2)) / 255.0 - 0.5 
+# Başlangıç gen aktivasyon seviyelerini ayarlama 
+activation = np.array([int(gene, 2)/255.0 for gene in genes]) 
+# GRN dinamiklerini simüle etme (birkaç iterasyon) 
+for _ in range(5): 
+new_activation = np.tanh(np.dot(weights, activation)) 
+activation = 0.5 * activation + 0.5 * new_activation 
+# Aktivasyonları fenotipik özelliklere dönüştürme 
+speed = activation[^0] * MAX_SPEED 
+size = activation[^1] * MAX_SIZE + MIN_SIZE 
+quorum_sensitivity = activation[^2] 
+return speed, size, quorum_sensitivity 
+Bu yöntem, gerçek biyolojik sistemlerde gözlemlenen genom-fenotip ilişkisinin doğrusal olmayan, 
+karmaşık doğasını daha iyi yansıtır 
+[1] 
+. 
+BacteriaType ve GA Optimizasyonu ile Entegrasyon 
+
+BacteriaType'ın trait_modifiers'ları, fenotipik özelliklerin ince ayarlanması için kullanılabilir. Genetik 
+algoritma (GA) optimizasyonu ise, belirli çevresel koşullarda hangi genomik yapıların daha başarılı 
+olacağını belirler. 
+def apply_trait_modifiers(base_phenotype, trait_modifiers): 
+return { 
+trait: base_value * (1 + trait_modifiers.get(trait, 0)) 
+for trait, base_value in base_phenotype.items() 
+} 
+class BacterialAgent: 
+def __init__(self, genome, bacteria_type): 
+self.genome = genome 
+self.bacteria_type = bacteria_type 
+self.base_phenotype = map_genome_to_phenotype(genome) 
+self.effective_phenotype = apply_trait_modifiers(
+ self.base_phenotype, 
+bacteria_type.trait_modifiers 
+) 
+GA optimizasyonu, popülasyonun genetik yapısını zaman içinde evrimleştirerek, çevresel 
+baskılara adapte olan genomların seçilmesini sağlar 
+[1] 
+. 
+Bakteriyel İletişim ve İşbirliği Modelleri 
+
+Bakteriler, kimyasal sinyalleşme ve elektriksel sinyaller aracılığıyla iletişim kurabilirler. Bu iletişim 
+mekanizmaları, simülasyon ortamında gerçekçi şekilde modellenmelidir. 
+Quorum Sensing Mekanizmasının Modellenmesi 
+
+Quorum sensing, bakterilerin belirli bir yoğunluğa ulaştıklarında toplu davranış değişiklikleri 
+göstermelerini sağlayan bir mekanizmadır. Bu mekanizma, şu şekilde modellenebilir: 
+class Environment: 
+def __init__(self, width, height): 
+self.width = width 
+self.height = height 
+self.signal_grid = np.zeros((width, height)) 
+self.diffusion_rate = 0.1 
+self.decay_rate = 0.02 
+def update_signals(self): 
+# Sinyallerin difüzyonu ve bozunması 
+new_grid = np.copy(self.signal_grid) 
+for x in range(self.width): 
+for y in range(self.height): 
+diffusion = self.diffusion_rate * ( 
+self.get_neighbors_average(x, y) - self.signal_grid[x, y] 
+) 
+decay = self.decay_rate * self.signal_grid[x, y] 
+new_grid[x, y] = self.signal_grid[x, y] + diffusion - decay 
+self.signal_grid = new_grid 
+def get_neighbors_average(self, x, y): 
+# Komşu hücrelerdeki sinyal yoğunluğunun ortalaması 
+total = 0 
+count = 0 
+for dx in [-1, 0, 1]: 
+for dy in [-1, 0, 1]: 
+if dx == 0 and dy == 0: 
+continue 
+nx, ny = (x + dx) % self.width, (y + dy) % self.height 
+total += self.signal_grid[nx, ny] 
+count += 1 
+return total / count if count > 0 else 0 
+Bakterilerin sinyal üretimi ve algılaması ise şu şekilde modellenebilir:
+class BacterialAgent: 
+# Diğer metodlar... 
+def emit_signal(self, environment): 
+# Bakteri konumuna sinyal ekle 
+x, y = int(self.position.x), int(self.position.y) 
+environment.signal_grid[x, y] += self.effective_phenotype['signal_production_rate 
+def sense_signal(self, environment): 
+# Bulunduğu konumdaki sinyal seviyesini algıla 
+x, y = int(self.position.x), int(self.position.y) 
+signal_level = environment.signal_grid[x, y] 
+threshold = self.effective_phenotype['quorum_threshold'] 
+if signal_level > threshold: 
+self.activate_quorum_response() 
+def activate_quorum_response(self): 
+# Quorum algılandığında aktive edilecek davranışlar 
+self.active_genes['biofilm_production'] = True 
+self.speed *= 0.5 # Hareketi yavaşlat 
+# Diğer quorum yanıtları... 
+Quorum sensing, bakterilerin popülasyon yoğunluğuna bağlı olarak gen ekspresyonlarını 
+koordine etmelerini sağlar. Bu mekanizma, biyofilm oluşumu, virülans faktörleri üretimi ve diğer 
+toplu davranışları tetikleyebilir 
+[1] 
+. 
+Elektriksel İletişim Modellemesi 
+
+Bakterilerin potasyum iyonları aracılığıyla gerçekleştirdiği uzun mesafeli elektriksel iletişim, 
+karmaşık Ginzburg-Landau denklemi veya doğrusal olmayan Schrödinger denklemi ile 
+modellenebilir 
+[1] 
+. 
+def update_electrical_signals(environment): 
+# Kompleks Ginzburg-Landau denklemi çözümü (basitleştirilmiş) 
+dt = 0.01 
+laplacian = scipy.ndimage.laplace(environment.electrical_field) 
+# Doğrusal olmayan terim 
+nonlinear_term = environment.electrical_field * ( 
+1 - abs(environment.electrical_field)**2 
+) 
+# Alan güncellemesi 
+environment.electrical_field += dt * ( 
+(1 + 1j * environment.epsilon) * laplacian + 
+(1 - 1j * environment.epsilon) * nonlinear_term 
+) 
+Potasyum dalgalarının modellemesi, göz önünde bulundurulması gereken kinematik viskozite ile 
+ilişkilidir. Araştırmalar, 0.01 ile 0.32 m²/s arasındaki viskozite değerlerinin quorum sensing için 
+optimal olduğunu göstermektedir 
+[1] 
+.
+İşbirliği Mekanizmalarının Entegrasyonu 
+
+Bakteriyel işbirliği, çeşitli mekanizmalar aracılığıyla ortaya çıkabilir. Bunlar arasında akraba 
+seçilimi, tekrarlanan etkileşimler ve mekânsal yapılanma bulunur. 
+Akraba Seçilimi ve Hamilton Kuralı 
+
+Akraba seçilimi, genetik olarak benzer bireylerin işbirliği yapma eğiliminde olduklarını öneren bir 
+evrimsel mekanizmadır. Bu, Hamilton kuralı ile modellenebilir: 
+def calculate_relatedness(agent1, agent2): 
+# İki bakterinin genomları arasındaki benzerliği ölç 
+matching_bits = sum( 
+1 for a, b in zip(agent1.genome, agent2.genome) if a == b 
+) 
+return matching_bits / len(agent1.genome) 
+def decide_cooperation(agent, neighbor, cost, benefit): 
+# Hamilton kuralı: r * b > c 
+relatedness = calculate_relatedness(agent, neighbor) 
+return relatedness * benefit > cost 
+Mekânsal Yapılanma ve Tekrarlanan Etkileşimler 
+
+Bakteriler, biyofilm içinde mekânsal olarak yapılandırılmış bir ortamda yaşarlar. Bu yapılanma, 
+işbirliğinin evrimini destekleyebilir: 
+def update_interaction_history(agent, neighbor, cooperation): 
+# Etkileşim geçmişini güncelle 
+if neighbor not in agent.interaction_history: 
+agent.interaction_history[neighbor] = [] 
+agent.interaction_history[neighbor].append(cooperation) 
+# Geçmişi sınırla (son N etkileşimi tut) 
+if len(agent.interaction_history[neighbor]) > MEMORY_SIZE: 
+agent.interaction_history[neighbor] = agent.interaction_history[neighbor][-MEMORY 
+def tit_for_tat_strategy(agent, neighbor): 
+# Basit bir "göze göz, dişe diş" stratejisi 
+if neighbor not in agent.interaction_history or not agent.interaction_history[neighbo 
+return True # İlk etkileşimde işbirliği yap 
+# Son etkileşimi taklit et 
+return agent.interaction_history[neighbor][-1] 
+Tekrarlanan etkileşimler, bakterilerin karşılıklı işbirliğini teşvik edebilir ve "aldatıcı" davranışların 
+cezalandırılmasını sağlayabilir 
+[1] 
+.
+Biyofilm Dinamikleri ve Desen Oluşumu 
+
+Bakteriyel biyofilmler, karmaşık yapılar ve desenlerin oluştuğu organize topluluklardır. Bu 
+desenler, kinematik viskozite gibi parametrelere bağlı olarak değişebilir. 
+Desen Oluşumu ve Viskozite İlişkisi 
+
+Kompleks Ginzburg-Landau denklemi, biyofilmlerde gözlemlenen desen oluşumunu modellemek 
+için kullanılabilir. Bakteriler, belirli viskozite aralıklarında (0.01 ile 0.32 m²/s) farklı desenlerde 
+organize olabilirler 
+[1] 
+. 
+def simulate_pattern_formation(environment, viscosity): 
+# Kompleks Ginzburg-Landau denklemi parametreleri 
+epsilon = 0.1 
+beta = 0.5 
+# Başlangıç koşulları 
+u = np.random.rand(environment.width, environment.height) * 0.1 
+v = np.random.rand(environment.width, environment.height) * 0.1 
+# Zamansal evrim 
+for t in range(1000): 
+# Laplace operatörü 
+laplace_u = scipy.ndimage.laplace(u) 
+laplace_v = scipy.ndimage.laplace(v) 
+# CGL denkleminin ayrık çözümü 
+u_new = u + 0.01 * (viscosity * laplace_u - (u**3 + v**2)*u + epsilon*v) 
+v_new = v + 0.01 * (viscosity * laplace_v - (u**2 + v**3)*v - epsilon*u) 
+u, v = u_new, v_new 
+return u, v 
+Farklı viskozite değerleri için çeşitli desen oluşumları gözlemlenebilir. Bu desenlerin biyolojik 
+önemi, besin maddesi alımı, koruma ve diğer bakterilerle etkileşimle ilgilidir 
+[1] 
+. 
+Biyofilm Büyümesi ve Metabolik Karşılıklı Bağımlılık 
+
+Biyofilmler büyüdükçe, iç hücrelere besin temini sınırlı hale gelir. Bu, iç ve çevre hücreleri arasında 
+metabolik karşılıklı bağımlılığın ortaya çıkmasına yol açar: 
+def update_biofilm_metabolism(biofilm): 
+# Biyofilm periferisi ve içi arasındaki besin alışverişi 
+periphery_cells = [cell for cell in biofilm.cells if cell.is_periphery] 
+interior_cells = [cell for cell in biofilm.cells if not cell.is_periphery] 
+# Perifer hücreleri besin alır 
+for cell in periphery_cells: 
+cell.nutrients += cell.nutrient_uptake_rate * biofilm.environment.nutrient_level 
+# İç hücreler açlık sinyali gönderir
+ for cell in interior_cells: 
+if cell.nutrients < cell.starvation_threshold: 
+cell.emit_starvation_signal(biofilm.environment) 
+# Metabolik salınımların güncellemesi 
+if biofilm.calculate_oscillation_phase() == "growth": 
+# Büyüme fazı: perifer hücreleri besinleri tüketir 
+for cell in periphery_cells: 
+cell.grow() 
+else: 
+# Paylaşım fazı: perifer hücreleri besinleri içe aktarır 
+for cell in periphery_cells: 
+shared_nutrients = cell.nutrients * cell.sharing_rate 
+cell.nutrients -= shared_nutrients 
+for interior_cell in interior_cells: 
+interior_cell.nutrients += shared_nutrients / len(interior_cells) 
+Bu karşılıklı bağımlılık, biyofilm içinde kolektif salınımlara yol açabilir. Uzaktaki biyofilmler, 
+davranışlarını koordine ederek sınırlı besinleri paylaşmak için zaman paylaşımı stratejisi 
+uygulayabilirler 
+[1] 
+. 
+Sonuç 
+
+Bakteriyel genom-fenotip haritalama ve iletişim mekanizmalarının simülasyonu, karmaşık 
+mikrobiyal ekosistemlerin dinamiklerini anlamak için güçlü araçlar sağlar. Bu raporda sunulan 
+modeller ve yaklaşımlar, gerçekçi bakteriyel simülasyonlar geliştirmek için kapsamlı bir çerçeve 
+sunmaktadır. 
+Genotip-fenotip bağlantısı için, basit doğrusal modellerden karmaşık gen düzenleyici ağlara 
+kadar çeşitli yaklaşımlar kullanılabilir. Bakteriyel iletişim için, quorum sensing ve elektriksel 
+sinyalleşme mekanizmaları Kompleks Ginzburg-Landau ve doğrusal olmayan Schrödinger 
+denklemleri ile modellenebilir. 
+İşbirliği mekanizmaları, akraba seçilimi, tekrarlanan etkileşimler ve mekânsal yapılanma gibi 
+faktörleri dikkate almalıdır. Biyofilm dinamikleri, desen oluşumu ve metabolik karşılıklı bağımlılık, 
+bakteriyel toplulukların organizasyonunda kritik rol oynar. 
+Bu mekanizmaların simülasyona entegrasyonu, bakteriyel davranışların çeşitliliğini ve 
+karmaşıklığını yakalamak için önemlidir. İleri simülasyonlar, bakteriyel sistemlerin temel 
+prensiplerini anlamayı ve yeni uygulamalar geliştirmeyi mümkün kılacaktır. 
+⁂ 
+https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/59748164/c2a2cdd5-981d-4c90-b494- 
+4a8212247efc/145458v1.full.pdf 
+
+
+
+Genom-Fenotip Haritalama ve Bakteriyel İletişim 
+Modellerinin NeoMag v3 Entegrasyonu 
+
+Arastirma_Genom_Fenotip_Iletisim.pdf belgesinde sunulan genom-fenotip haritalama ve 
+bakteriyel iletişim modellerinin NeoMag v3 projesine entegrasyonu için kapsamlı bir inceleme ve 
+tasarım çalışması gerçekleştirdim. Bu rapor, en uygun modellerin seçimi, kod entegrasyonu ve 
+simülasyon döngüsüne dahil edilmesi için detaylı planları içermektedir. 
+Genom-Fenotip Haritalama Modellerinin Değerlendirilmesi 
+
+Doğrusal ve Doğrusal Olmayan Haritalama Modelleri 
+
+Belgedeki iki temel genom-fenotip haritalama yaklaşımını (doğrusal ve GRN tabanlı) 
+karşılaştırarak, NeoMag v3 projesine en uygun modeli belirlemek gerekiyor. 
+Doğrusal Haritalama Modeli 
+
+Doğrusal model, genomun belirli segmentlerini doğrudan fenotipik özelliklere eşleyen basit bir 
+yaklaşımdır 
+[1] 
+. Bu model hesaplama açısından verimli olsa da, gerçek biyolojik sistemlerde 
+gözlemlenen karmaşık gen-fenotip ilişkilerini tam olarak yansıtmaz. 
+def map_genome_to_phenotype(genome): 
+# Genomu bölgelere ayırma 
+speed_gene = genome[0:8] 
+size_gene = genome[8:16] 
+quorum_sensitivity_gene = genome[16:24] 
+# Basit doğrusal dönüşüm 
+speed = binary_to_decimal(speed_gene) / 255.0 * MAX_SPEED 
+size = binary_to_decimal(size_gene) / 255.0 * MAX_SIZE + MIN_SIZE 
+quorum_sensitivity = binary_to_decimal(quorum_sensitivity_gene) / 255.0 
+return speed, size, quorum_sensitivity 
+Gen Düzenleyici Ağ (GRN) Modeli 
+
+GRN modeli, genlerin birbirleriyle etkileşimini modelleyen daha karmaşık bir yaklaşımdır 
+[1] 
+. Bu 
+model pleiotropi (bir genin birden fazla fenotipi etkilemesi) ve epistasi (genlerin etkileşimli etkisi) 
+gibi gerçek biyolojik sistemlerde gözlemlenen özellikleri modelleyebilir. 
+def grn_based_phenotype_mapping(genome): 
+# Genomu genlere bölme
+ genes = [genome[i:i+8] for i in range(0, len(genome), 8)] 
+# GRN ağırlık matrisi oluşturma 
+weights = np.zeros((len(genes), len(genes))) 
+for i in range(len(genes)): 
+for j in range(len(genes)): 
+if i != j: 
+weights[i][j] = (int(genes[i], 2) ^ int(genes[j], 2)) / 255.0 - 0.5 
+# GRN dinamiklerini simüle etme 
+activation = np.array([int(gene, 2)/255.0 for gene in genes]) 
+for _ in range(5): 
+new_activation = np.tanh(np.dot(weights, activation)) 
+activation = 0.5 * activation + 0.5 * new_activation 
+# Aktivasyonları fenotipik özelliklere dönüştürme 
+speed = activation[^0] * MAX_SPEED 
+size = activation[^1] * MAX_SIZE + MIN_SIZE 
+quorum_sensitivity = activation[^2] 
+return speed, size, quorum_sensitivity 
+Model Seçimi ve Entegrasyon Planı 
+
+NeoMag v3 için hibrit bir yaklaşım öneriyorum. Başlangıçta doğrusal modeli implement etmek 
+ve daha sonra GRN modelini eklemek, proje gelişimini kolaylaştıracaktır. 
+Bacteria.py Entegrasyonu için Tasarım: 
+
+class BacterialGenome: 
+def __init__(self, binary_sequence, mapping_type="linear"): 
+self.binary_sequence = binary_sequence 
+self.mapping_type = mapping_type 
+self.phenotype = self.map_to_phenotype() 
+def map_to_phenotype(self): 
+if self.mapping_type == "linear": 
+return self._linear_mapping() 
+elif self.mapping_type == "grn": 
+return self._grn_mapping() 
+else: 
+raise ValueError(f"Unknown mapping type: {self.mapping_type}") 
+def _linear_mapping(self): 
+"""Doğrusal genom-fenotip haritalama""" 
+phenotype = {} 
+# Genom segmentlerini tanımla 
+segment_definitions = { 
+"speed": (0, 8), 
+"size": (8, 16), 
+"quorum_sensitivity": (16, 24), 
+"signal_production": (24, 32), 
+"metabolism_rate": (32, 40),
+ # Daha fazla özellik eklenebilir 
+} 
+# Her segment için fenotipik özellik hesapla 
+for trait, (start, end) in segment_definitions.items(): 
+gene_segment = self.binary_sequence[start:end] 
+normalized_value = int(gene_segment, 2) / (2**(end-start) - 1) 
+# Özelliğe özgü ölçeklendirme 
+if trait == "speed": 
+phenotype[trait] = normalized_value * MAX_SPEED 
+elif trait == "size": 
+phenotype[trait] = normalized_value * (MAX_SIZE - MIN_SIZE) + MIN_SIZE 
+else: 
+phenotype[trait] = normalized_value 
+return phenotype 
+def _grn_mapping(self): 
+"""Gen Düzenleyici Ağ tabanlı genom-fenotip haritalama""" 
+import numpy as np 
+# Genomu gen segmentlerine böl 
+gene_length = 8 
+genes = [self.binary_sequence[i:i+gene_length] 
+for i in range(0, len(self.binary_sequence), gene_length)] 
+# GRN ağırlık matrisi oluştur 
+num_genes = len(genes) 
+weights = np.zeros((num_genes, num_genes)) 
+for i in range(num_genes): 
+for j in range(num_genes): 
+if i != j: 
+# XOR operasyonu gen etkileşimlerini belirler 
+weights[i][j] = (int(genes[i], 2) ^ int(genes[j], 2)) / 255.0 - 0.5 
+# Başlangıç aktivasyonları 
+activation = np.array([int(gene, 2)/255.0 for gene in genes]) 
+# GRN dinamiklerini simüle et 
+for _ in range(5): # İterasyon sayısı parametrize edilebilir 
+new_activation = np.tanh(np.dot(weights, activation)) 
+activation = 0.5 * activation + 0.5 * new_activation 
+# Trait eşleştirmeleri 
+trait_mappings = { 
+"speed": 0, 
+"size": 1, 
+"quorum_sensitivity": 2, 
+"signal_production": 3, 
+"metabolism_rate": 4, 
+# Daha fazla trait eklenebilir 
+} 
+# Aktivasyonları fenotipik özelliklere dönüştür
+ phenotype = {} 
+for trait, index in trait_mappings.items(): 
+if index < len(activation): 
+value = activation[index] 
+# Özelliğe özgü ölçeklendirme 
+if trait == "speed": 
+phenotype[trait] = value * MAX_SPEED 
+elif trait == "size": 
+phenotype[trait] = value * (MAX_SIZE - MIN_SIZE) + MIN_SIZE 
+else: 
+phenotype[trait] = value 
+return phenotype 
+def mutate(self, mutation_rate): 
+"""Genomda mutasyon gerçekleştirir ve fenotipi günceller""" 
+import random 
+mutated_sequence = "" 
+for bit in self.binary_sequence: 
+if random.random() < mutation_rate: 
+mutated_bit = '1' if bit == '0' else '0' 
+else: 
+mutated_bit = bit 
+mutated_sequence += mutated_bit 
+self.binary_sequence = mutated_sequence 
+self.phenotype = self.map_to_phenotype() 
+return self 
+Bacteria.py Ana Sınıf Entegrasyonu: 
+
+class Bacteria: 
+def __init__(self, genome=None, bacteria_type=None): 
+# Eğer genom verilmemişse rastgele oluştur 
+if genome is None: 
+genome_length = 64 # Örnek uzunluk, gerektiği gibi ayarlanabilir 
+binary_sequence = ''.join(random.choice(['0', '1']) for _ in range(genome_len 
+self.genome = BacterialGenome(binary_sequence) 
+else: 
+self.genome = genome 
+self.bacteria_type = bacteria_type or DefaultBacteriaType() 
+# Fenotip hesaplama 
+self.base_phenotype = self.genome.phenotype 
+self.effective_phenotype = self.apply_trait_modifiers() 
+# Diğer özellikler 
+self.position = Vector2(0, 0) # Başlangıç konumu 
+self.active_genes = {} # Aktif genler/davranışlar 
+self.energy = 100 # Başlangıç enerjisi 
+def apply_trait_modifiers(self):
+ """Bakterinin türüne göre fenotipik özellikleri modifiye eder""" 
+modified_phenotype = {} 
+for trait, base_value in self.base_phenotype.items(): 
+modifier = self.bacteria_type.trait_modifiers.get(trait, 0) 
+modified_phenotype[trait] = base_value * (1 + modifier) 
+return modified_phenotype 
+def update(self, environment, dt): 
+"""Her simülasyon adımında bakterinin davranışını günceller""" 
+# Quorum sensing güncellemesi - eğer aktifse 
+if hasattr(environment, 'signal_grid'): 
+self.sense_signal(environment) 
+self.emit_signal(environment) 
+# Enerji metabolizması güncellemesi 
+self.update_energy(dt) 
+# Decision-making mekanizması ile hareket kararı 
+decision = self.decision_mechanism.decide_action(self, environment) 
+self.execute_action(decision, environment, dt) 
+Bakteriyel İletişim Modellerinin Değerlendirilmesi 
+
+Quorum Sensing Modeli 
+
+Quorum sensing, bakterilerin popülasyon yoğunluğuna bağlı olarak davranışlarını değiştirmelerine 
+olanak tanıyan bir mekanizmadır 
+[1] 
+. NeoMag v3 için difüzyon-bozunma temelli bir quorum 
+sensing modeli öneriyorum. 
+Environment.py Entegrasyonu: 
+
+class Environment: 
+def __init__(self, width, height): 
+self.width = width 
+self.height = height 
+# Sinyal difüzyonu için grid 
+self.signal_grid = np.zeros((width, height)) 
+# Difüzyon parametreleri 
+self.diffusion_rate = 0.1 # Sinyallerin yayılma hızı 
+self.decay_rate = 0.02 # Sinyallerin bozunma hızı 
+# Diğer çevre özellikleri... 
+self.food_sources = [] 
+self.obstacles = [] 
+def update(self, dt, agents): 
+"""Her simülasyon adımında çevreyi günceller""" 
+# Besin kaynaklarını güncelle 
+self.update_food_sources(dt) 
+# Sinyal difüzyonunu güncelle
+ self.update_signals(dt) 
+# Ajanların ortamla etkileşimlerini işle 
+for agent in agents: 
+# Ajan pozisyonlarını ve sınır koşullarını kontrol et 
+self.enforce_boundaries(agent) 
+def update_signals(self, dt): 
+"""Sinyal difüzyonu ve bozunmasını simüle eder""" 
+# Laplace operatörü ile difüzyonu hesapla 
+diffusion = self.diffusion_rate * scipy.ndimage.laplace(self.signal_grid) 
+# Bozunma terimini hesapla 
+decay = self.decay_rate * self.signal_grid 
+# Sinyal gridini güncelle 
+self.signal_grid += dt * (diffusion - decay) 
+# Negatif değerleri sıfırla 
+self.signal_grid = np.maximum(0, self.signal_grid) 
+def get_signal_level(self, x, y): 
+"""Belirli bir konumdaki sinyal seviyesini döndürür""" 
+# Sınır kontrolü 
+x = max(0, min(int(x), self.width - 1)) 
+y = max(0, min(int(y), self.height - 1)) 
+return self.signal_grid[x, y] 
+def add_signal(self, x, y, amount): 
+"""Belirli bir konuma sinyal ekler""" 
+# Sınır kontrolü 
+x = max(0, min(int(x), self.width - 1)) 
+y = max(0, min(int(y), self.height - 1)) 
+self.signal_grid[x, y] += amount 
+Elektriksel Sinyalleşme Modeli (Kompleks Ginzburg-Landau Denklemi) 
+
+Elektriksel sinyalleşme, bakteriler arasında uzun mesafeli iletişim sağlayan daha karmaşık bir 
+mekanizmadır 
+[1] 
+. Bu model, kompleks Ginzburg-Landau denklemi kullanılarak modellenebilir. 
+Environment.py için Elektriksel Sinyalleşme Eklentisi: 
+
+def initialize_electrical_field(self): 
+"""Elektriksel alan gridini başlatır""" 
+self.electrical_field = np.zeros((self.width, self.height), dtype=complex) 
+self.epsilon = 0.1 # CGL denklemi parametresi 
+self.viscosity = 0.05 # Kinematik viskozite (0.01-0.32 arası optimal) 
+def update_electrical_signals(self, dt): 
+"""Kompleks Ginzburg-Landau denklemi ile elektriksel alan güncellemesi""" 
+import scipy.ndimage 
+
+ # Laplace operatörü (ikinci türev) 
+laplacian = scipy.ndimage.laplace(self.electrical_field) 
+# Doğrusal olmayan terim 
+nonlinear_term = self.electrical_field * (1 - abs(self.electrical_field)**2) 
+# CGL denklemi güncellemesi 
+self.electrical_field += dt * ( 
+self.viscosity * (1 + 1j * self.epsilon) * laplacian + 
+(1 - 1j * self.epsilon) * nonlinear_term 
+) 
+Quorum Sensing Mekanizmasının Bacteria.py'ye Entegrasyonu 
+
+Sinyal Üretimi ve Algılaması 
+
+def emit_signal(self, environment): 
+"""Bakteri konumuna sinyal ekler""" 
+x, y = int(self.position.x), int(self.position.y) 
+signal_amount = self.effective_phenotype.get('signal_production', 0.1) 
+# Enerji durumuna göre sinyal üretimini ayarla 
+if hasattr(self, 'energy'): 
+energy_ratio = self.energy / 100.0 
+signal_amount *= max(0.1, energy_ratio) 
+environment.add_signal(x, y, signal_amount) 
+def sense_signal(self, environment): 
+"""Çevredeki sinyal seviyesini algılar ve davranışları buna göre düzenler""" 
+x, y = int(self.position.x), int(self.position.y) 
+local_signal = environment.get_signal_level(x, y) 
+# Quorum algılama eşiği 
+threshold = self.effective_phenotype.get('quorum_threshold', 0.5) 
+# Eşik aşıldığında quorum yanıtını etkinleştir 
+if local_signal > threshold: 
+self.activate_quorum_response(local_signal) 
+else: 
+self.deactivate_quorum_response() 
+def activate_quorum_response(self, signal_level): 
+"""Quorum algılandığında aktive edilecek davranışlar""" 
+# Quorum yanıtını aktifleştir 
+self.active_genes['quorum_active'] = True 
+# Hareketi yavaşlat 
+speed_modifier = max(0.3, 1.0 - signal_level) 
+self.current_speed = self.effective_phenotype['speed'] * speed_modifier 
+# Biyofilm üretimini aktifleştir 
+if signal_level > self.effective_phenotype.get('biofilm_threshold', 0.7): 
+self.active_genes['biofilm_production'] = True
+ # Biyofilm üretimi için enerji harcama 
+self.energy -= 0.1 
+# Diğer quorum yanıtları 
+# Örneğin: virülans faktörleri, antibiyotik üretimi, vb. 
+def deactivate_quorum_response(self): 
+"""Quorum yanıtını deaktive eder""" 
+self.active_genes['quorum_active'] = False 
+self.active_genes['biofilm_production'] = False 
+self.current_speed = self.effective_phenotype['speed'] 
+Decision Making Mekanizmasının Geliştirilmesi 
+
+Decision_making.py içinde quorum sensing ve elektriksel sinyalleşme tabanlı karar verme 
+mekanizmaları: 
+class QuorumSensingDecisionMechanism(DecisionMechanism): 
+"""Quorum sensing bilgisine dayalı karar verme mekanizması""" 
+def decide_action(self, agent, environment_state): 
+# Ajanın quorum durumunu kontrol et 
+quorum_active = agent.active_genes.get('quorum_active', False) 
+if quorum_active: 
+# Quorum aktifse kolektif davranış 
+if agent.active_genes.get('biofilm_production', False): 
+# Biyofilm üretimi sırasında hareket azalır 
+if random.random() < 0.8: 
+return 4 # Beslenme davranışı 
+else: 
+return random.randint(0, 3) # Az hareketlilik 
+else: 
+# Normal quorum aktif durumu 
+if random.random() < 0.5: 
+# En yakın bakteriye doğru hareket 
+return self._move_towards_nearest_bacteria(agent, environment_state) 
+else: 
+return random.randint(0, 3) 
+else: 
+# Quorum aktif değilse normal davranış 
+if random.random() < 0.3: 
+return 4 # %30 beslenme davranışı 
+else: 
+return random.randint(0, 3) # %70 rastgele hareket 
+def _move_towards_nearest_bacteria(self, agent, environment_state): 
+# En yakın bakteriyi bul 
+nearest = None 
+min_distance = float('inf') 
+for other in environment_state.get('agents', []): 
+if other == agent: 
+continue
+ distance = ((agent.position.x - other.position.x)**2 + 
+(agent.position.y - other.position.y)**2)**0.5 
+if distance < min_distance: 
+min_distance = distance 
+nearest = other 
+if nearest: 
+# En yakın bakteriye doğru yönlenme 
+dx = nearest.position.x - agent.position.x 
+dy = nearest.position.y - agent.position.y 
+if abs(dx) > abs(dy): 
+return 2 if dx < 0 else 3 # Sol veya sağ 
+else: 
+return 0 if dy < 0 else 1 # Yukarı veya aşağı 
+return random.randint(0, 3) # Yakın bakteri yoksa rastgele 
+Simülasyon Döngüsü Entegrasyon Noktaları 
+
+Simulation_core.py için entegrasyon noktaları: 
+class Simulation: 
+def __init__(self, width, height, num_bacteria=100): 
+# Çevre oluştur 
+self.environment = Environment(width, height) 
+# Quorum sensing için sinyal alanını başlat 
+self.environment.signal_grid = np.zeros((width, height)) 
+# İsteğe bağlı: Elektriksel sinyalleşme için alan başlat 
+#self.environment.initialize_electrical_field() 
+# Bakterileri oluştur 
+self.agents = [] 
+for _ in range(num_bacteria): 
+x = random.randint(0, width-1) 
+y = random.randint(0, height-1) 
+# Rastgele genom oluştur 
+genome_length = 64 
+binary_sequence = ''.join(random.choice(['0', '1']) for _ in range(genome_len 
+genome = BacterialGenome(binary_sequence, mapping_type="linear") 
+bacteria = Bacteria(genome=genome) 
+bacteria.position = Vector2(x, y) 
+bacteria.decision_mechanism = QuorumSensingDecisionMechanism() 
+self.agents.append(bacteria) 
+def step(self, dt=1.0): 
+"""Bir simülasyon adımını gerçekleştirir""" 
+# Çevreyi güncelle 
+self.environment.update(dt, self.agents)
+ # Her bakteriyi güncelle 
+for agent in self.agents: 
+# Sinyal üretimi 
+agent.emit_signal(self.environment) 
+# Ana bakteriyel güncelleme 
+agent.update(self.environment, dt) 
+# Genetik Algoritma güncellemesi (belirli aralıklarla) 
+self.step_count = getattr(self, 'step_count', 0) + 1 
+if self.step_count % 100 == 0: # Her 100 adımda bir evrimsel adım 
+self.evolve_population() 
+def evolve_population(self): 
+"""Bakteriyel popülasyonu evrimleştirir""" 
+# En uygun bireyleri seç 
+fitness_scores = [(agent, agent.calculate_fitness()) for agent in self.agents] 
+fitness_scores.sort(key=lambda x: x[^1], reverse=True) 
+# En uygun bireylerin %20'sini al 
+elite_count = max(2, int(len(self.agents) * 0.2)) 
+elites = [agent for agent, _ in fitness_scores[:elite_count]] 
+# Yeni popülasyon oluştur 
+new_population = [] 
+# Elitleri doğrudan aktar 
+new_population.extend(elites) 
+# Kalan popülasyonu oluştur 
+while len(new_population) < len(self.agents): 
+# İki ebeveyn seç 
+parent1 = random.choice(elites) 
+parent2 = random.choice(elites) 
+# Çaprazlama 
+child_genome = self.crossover(parent1.genome, parent2.genome) 
+# Mutasyon 
+child_genome.mutate(mutation_rate=0.01) 
+# Yeni bakteriyi oluştur 
+child = Bacteria(genome=child_genome) 
+child.position = Vector2(random.randint(0, self.environment.width-1), 
+random.randint(0, self.environment.height-1)) 
+child.decision_mechanism = parent1.decision_mechanism # Ebeveynden karar mek 
+new_population.append(child) 
+# Popülasyonu güncelle 
+self.agents = new_population 
+def crossover(self, genome1, genome2): 
+"""İki genomun çaprazlanmasıyla yeni bir genom oluşturur""" 
+# Çaprazlama noktası
+ crossover_point = random.randint(1, len(genome1.binary_sequence)-1) 
+# Yeni genom oluştur 
+child_sequence = genome1.binary_sequence[:crossover_point] + genome2.binary_seque 
+return BacterialGenome(child_sequence, mapping_type=genome1.mapping_type) 
+Entegrasyon Akış Şeması 
+
+Önerilen genom-fenotip haritalama ve bakteriyel iletişim modellerinin simülasyon döngüsüne 
+entegrasyonu aşağıdaki akış şemasıyla gösterilebilir: 
+Simülasyon Başlangıcı 
+Çevre oluşturulur (Environment) 
+Sinyal gridi başlatılır (Quorum Sensing için) 
+Bakterilerin genoma dayalı fenotipleri hesaplanır 
+
+
+
+Her Simülasyon Adımında 
+Bakteriler sinyal üretir (emit_signal) 
+Çevre sinyalleri güncellenir (update_signals) 
+Bakteriler sinyalleri algılar (sense_signal) 
+Bakterilerin davranışları karar mekanizması ile belirlenir 
+(QuorumSensingDecisionMechanism) 
+Bakteriler hareketlerini ve metabolizmalarını günceller 
+
+
+
+Periyodik Evrimsel Adımlar 
+Bakterilerin uygunluk değerleri hesaplanır (fitness) 
+En uygun bireyler seçilir 
+Çaprazlama ve mutasyon ile yeni genomlar oluşturulur 
+Yeni genomlar fenotiplere dönüştürülür 
+Popülasyon güncellenir 
+
+
+
+
+
+Sonuç ve Öneriler 
+
+Bu raporda, Arastirma_Genom_Fenotip_Iletisim.pdf belgesindeki modellerden NeoMag v3 
+projesine en uygun olanları seçilmiş ve entegrasyon planları oluşturulmuştur. Önerilen yaklaşımın 
+avantajları: 
+Aşamalı Karmaşıklık: Başlangıçta doğrusal haritalama ile başlayıp, daha sonra GRN 
+modeline geçiş yapılabilir. 
+Modüler Yapı: Haritalama mekanizması ve iletişim mekanizması bağımsız olarak 
+geliştirilebilir. 
+Gerçekçi Bakteriyel Davranış: Quorum sensing, bakteriyel popülasyonlarda gözlemlenen 
+kolektif davranışları modellemek için etkili bir mekanizmadır. 
+
+
+
+Sonraki adımlar için öneriler: 
+Önce doğrusal haritalama modelini implement ederek temel fonksiyonaliteyi test etmek. 
+Quorum sensing mekanizmasını ekleyerek bakteriyel iletişimi aktif hale getirmek. 
+Sistemi test ettikten sonra, GRN modeli ve elektriksel sinyalleşme gibi daha karmaşık 
+mekanizmaları entegre etmek. 
+Görsel araçlar ekleyerek sinyal difüzyonu ve bakteriyel davranış paternlerini gözlemlemek. 
+
+
+Bu entegrasyon planı, NeoMag v3 projesinin gerçekçi bakteriyel simülasyonlar oluşturma 
+kapasitesini önemli ölçüde artıracaktır 
+[1] 
+. 
+⁂ 
+https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/60364002/b2066754-8a81-4494-a037 
+-c2ff56341161/Arastirma_Genom_Fenotip_Iletisim.pdf 
+
+
+
+GPU Hızlandırması ile Simülasyon Performansının Artırılması: 
+simulation_core.py Analizi 
+
+Simülasyonlar, karmaşık sistemlerin davranışlarını anlamak ve tahmin etmek için güçlü 
+araçlardır. Ancak, özellikle çok sayıda etkileşen öğe içeren simülasyonlar, önemli 
+miktarda işlem gücü gerektirebilir ve bu da uzun çalışma sürelerine yol açabilir. Bu 
+bağlamda, Grafik İşleme Birimleri'nin (GPU'lar) paralel işlem yeteneklerinden 
+yararlanmak, simülasyon performansını önemli ölçüde artırma potansiyeli sunar. Bu 
+rapor, simulation_core.py dosyasındaki bir bakteri simülasyonunun GPU hızlandırması 
+için CuPy kütüphanesinin kullanımını incelemektedir. Amaç, simülasyonun en çok fayda 
+sağlayacağı potansiyel darboğazları belirlemek ve bu darboğazlarda NumPy 
+operasyonlarının CuPy ile nasıl değiştirilebileceğine dair pratik öneriler sunmaktır. 
+
+Performans Darboğazlarının Belirlenmesi 
+
+Simülasyon performansını optimize etmenin ilk adımı, en çok işlem zamanını tüketen 
+bölümleri, yani darboğazları belirlemektir. Python kodunun performansını analiz etmek 
+için çeşitli profil oluşturma araçları mevcuttur 1. Bu araçlar, programın farklı 
+bölümlerinin ne kadar süreyle ve kaç kez yürütüldüğüne dair ayrıntılı bilgiler sağlayarak 
+optimizasyon için en uygun alanların belirlenmesine yardımcı olur 3. 
+
+cProfile: Detaylı Çalışma Zamanı İstatistikleri 
+
+Python'ın standart kütüphanesinde yer alan cProfile modülü, programın deterministik 
+profilini çıkarır 3. Bu, programdaki her fonksiyon çağrısının ne kadar sürdüğünü ve kaç 
+kez çağrıldığını gösteren istatistikler üretir 4. cProfile'ı bir Python betiğiyle kullanmak 
+için birkaç yöntem bulunmaktadır. Komut satırından betiği profil oluşturarak çalıştırmak 
+mümkündür: python -m cProfile -o profile_output.prof your_script.py 3. Alternatif 
+olarak, kodun içine cProfile.run('your_function()') eklenerek belirli bir fonksiyonun 
+profili alınabilir 3. Profil oluşturma tamamlandıktan sonra, pstats modülü kullanılarak 
+sonuçlar çeşitli şekillerde formatlanabilir ve sıralanabilir 3. Örneğin, en çok zaman 
+harcayan ilk 20 fonksiyonu görüntülemek için aşağıdaki kod kullanılabilir: 
+
+ 
+
+Python 
+
+ 
+
+ 
+
+import pstats 
+from pstats import SortKey 
+
+
+
+p = pstats.Stats('profile_output.prof') 
+p.sort_stats(SortKey.CUMULATIVE).print_stats(20) 
+
+
+cProfile çıktısının görselleştirilmesi için SnakeViz gibi araçlar kullanılabilir 2. pip install 
+snakeviz komutuyla kurulduktan sonra, snakeviz profile_output.prof komutu 
+çalıştırılarak web tarayıcısında etkileşimli bir görselleştirme elde edilebilir. cProfile 
+çıktısını inceleyerek, simulation_core.py içinde en çok işlem zamanını tüketen 
+fonksiyonlar (örneğin, SimulationCore.update(), ajan metotları veya 
+calculate_distance) belirlenebilir. Özellikle cumulative time (bir fonksiyon ve alt 
+fonksiyonlarında harcanan toplam süre) metriği, potansiyel darboğazları işaretlemede 
+önemlidir. Fonksiyonların sıklığı ve yürütme süreleri incelenerek optimizasyon için 
+odaklanılacak noktalar tespit edilebilir. 
+
+line_profiler: Satır Satır Performans Analizi 
+
+cProfile ile darboğaz oluşturan fonksiyonlar belirlendikten sonra, line_profiler bu 
+fonksiyonların içindeki belirli kod satırlarının performansını daha ayrıntılı bir şekilde 
+analiz etmek için kullanılabilir 1. line_profiler'ı kullanmak için öncelikle pip install 
+line_profiler komutuyla kurulum yapılması ve analiz edilecek fonksiyonların @profile 
+dekoratörü ile işaretlenmesi gerekmektedir 11. Örneğin, SimulationCore sınıfındaki 
+update metodunun profilini almak için @profile dekoratörü metot tanımının üzerine 
+eklenir. Ardından, betik kernprof -l simulation_core.py komutuyla çalıştırılır. Bu, bir 
+.lprof dosyası oluşturur. Sonuçları görüntülemek için python -m line_profiler 
+simulation_core.py.lprof komutu kullanılır. line_profiler, darboğaz oluşturan 
+fonksiyonlardaki döngüler (örneğin, ajanlar üzerindeki döngüler), bu döngüler içindeki 
+hesaplamalar veya calculate_distance gibi diğer fonksiyonlara yapılan çağrılar gibi en 
+çok zaman tüketen belirli kod satırlarını ortaya çıkarabilir. Satır düzeyinde yürütme 
+süresini göstererek, optimizasyonun hangi işlemlere odaklanması gerektiği netleşir. 
+
+simulation_core.py İçinde Profil Oluşturma İçin Odak Alanları 
+
+simulation_core.py dosyasında performans profilinin çıkarılması için öncelikli alanlar 
+şunlardır: 
+
+● Ajanların durumlarının ve etkileşimlerinin işlendiği ana döngü olan SimulationCore 
+sınıfının update() metodu. 
+● update() metodu içindeki bakteri listesi üzerinde yineleyen döngü (for agent in 
+list(self.bacteria):). 
+● Bu döngü içinde çağrılan agent.update(), agent.reproduce() gibi metotlar ve 
+potansiyel olarak agent.update() içindeki etkileşim mantığı. 
+● utils.py dosyasındaki calculate_distance fonksiyonu ve bu fonksiyonun 
+
+
+
+simulation_core.py veya ajan sınıfları içinde (eğer ajan-ajan etkileşimleri 
+uygulanmışsa) çağrıldığı tüm yerler. 
+
+
+Büyük sayıda ajanın tekrar tekrar işlenmesi ve mesafelerin hesaplanması potansiyel 
+olarak önemli performans darboğazları oluşturabilir. Bu nedenle, profil oluşturma 
+araçları bu alanlara odaklanılarak en verimli optimizasyon stratejileri belirlenebilir. 
+
+NumPy Operasyonlarının Analizi 
+
+Performans darboğazları belirlendikten sonra, bu bölümlerdeki NumPy fonksiyonlarının 
+kullanımı incelenmelidir. simulation_core.py dosyasında numpy kütüphanesinin np 
+takma adıyla içe aktarılmasıyla başlayan ve np ad alanındaki fonksiyonlara ve 
+nesnelere yapılan tüm çağrılar tespit edilmelidir. Mevcut kodda np.random.uniform ve 
+np.random.gauss gibi örnekler bulunmaktadır. Bu NumPy operasyonları, GPU 
+hızlandırmasından yararlanmak için CuPy kütüphanesindeki karşılıklarıyla 
+değiştirilebilecek potansiyel adaylardır. 
+
+Temel NumPy Fonksiyonlarının CuPy Karşılıklarına Eşlenmesi 
+
+Sayısal hesaplamalarda sıkça kullanılan birçok NumPy fonksiyonunun CuPy'de 
+doğrudan karşılığı bulunmaktadır. simulation_core.py içinde tespit edilen NumPy 
+fonksiyonları için: 
+
+● np.random.uniform fonksiyonu cupy.random.uniform ile değiştirilebilir. 
+● np.random.gauss fonksiyonu, normal dağılımı temsil ettiği için 
+cupy.random.normal ile değiştirilebilir. 
+
+
+Eğer utils.py dosyasındaki calculate_distance fonksiyonu dizi işlemleri için NumPy 
+kullanıyorsa (örneğin, np.array, np.sqrt, np.sum), bu operasyonlar da CuPy 
+karşılıklarıyla değiştirilmelidir. Fonksiyon adlarının doğrudan eşlenmesi, CuPy'ye geçiş 
+sürecini önemli ölçüde kolaylaştırır. 
+
+Veri Yapıları ve Dizi Operasyonlarının Değerlendirilmesi 
+
+Simülasyon, bakteri ve besin kaynaklarını depolamak için Python listelerini 
+kullanmaktadır. CuPy ile GPU üzerinde verimli işlem gerçekleştirmek için bu listelerin 
+CuPy dizilerine dönüştürülmesi gerekmektedir. Bu koleksiyonları içeren işlemler, 
+örneğin tüm bakteri çiftleri arasındaki mesafelerin hesaplanması veya hızlarına göre 
+konumlarının güncellenmesi, CuPy dizi operasyonları kullanılarak önemli ölçüde 
+hızlandırılabilir. Verilerin CuPy dizilerine dönüştürülmesi, GPU'nun paralel işlem 
+yeteneklerinin kilidini açmak için temel bir gerekliliktir. GPU'lar, dizi benzeri veri yapıları 
+üzerinde işlem yapmak üzere optimize edilmiştir, bu nedenle Python listelerinin CuPy 
+
+
+dizilerine dönüştürülmesi GPU hızlandırması için ön koşuldur. 
+
+NumPy'yi İçeren Potansiyel Darboğazların Belirlenmesi 
+
+Performans darboğazı olarak belirlenen alanlardaki (örneğin, SimulationCore.update() 
+içindeki döngüler ve calculate_distance fonksiyonu) NumPy operasyonlarına 
+odaklanılmalıdır. Çok sayıda ajan veya veri noktası üzerinde tekrar tekrar 
+gerçekleştirilen işlemler, GPU hızlandırmasından en çok fayda sağlayacak adaylardır. 
+Bu nedenle, kodun en çok zaman tüketen kısımlarındaki NumPy operasyonlarının CuPy 
+karşılıklarıyla değiştirilmesi, en büyük performans artışlarını sağlayacaktır. 
+
+Pratik CuPy Uygulaması ve En İyi Uygulamalar 
+
+NumPy'dan CuPy'ye Değişim İçin Örnek Kodlar 
+
+● Başlangıç Durumu Oluşturma: 
+Python 
+# Orijinal (NumPy) 
+import numpy as np 
+# ... _populate_initial_state içinde ... 
+x = random.uniform(0, self.width) 
+y = random.uniform(0, self.height) 
+initial_energy = random.gauss(config.INITIAL_ENERGY_MEAN, 
+config.INITIAL_ENERGY_STDDEV) 
+# Değiştirilmiş (CuPy) 
+import cupy as cp 
+# ... _populate_initial_state içinde ... 
+x = float(cp.random.uniform(0, self.width)) # Diğer kısımlar için gerekirse float'a dönüştür 
+y = float(cp.random.uniform(0, self.height)) 
+initial_energy = float(cp.random.normal(config.INITIAL_ENERGY_MEAN, 
+config.INITIAL_ENERGY_STDDEV)) 
+Rastgele sayı üretimi sıklıkla kullanılan bir işlemse veya çok sayıda rastgele sayı 
+üretiliyorsa, bu basit değişiklik bile faydalı olabilir. Çok sayıda ajanın rastgele 
+özelliklerle başlatılması, GPU'ya yüklenebilecek paralel bir görevdir. 
+● Mesafe Hesaplama (utils.py dosyasının NumPy kullandığı varsayılarak): 
+Python 
+# utils.py (Orijinal - Varsayımsal) 
+import numpy as np 
+def calculate_distance(point1, point2): 
+return np.sqrt(np.sum((np.array(point1) - np.array(point2))**2)) 
+
+
+
+# utils.py (Değiştirilmiş - CuPy uyumlu) 
+import numpy as np 
+import cupy as cp 
+def calculate_distance(point1, point2): 
+if isinstance(point1, cp.ndarray) and isinstance(point2, cp.ndarray): 
+return cp.sqrt(cp.sum((point1 - point2)**2)) 
+else: 
+return np.sqrt(np.sum((np.array(point1) - np.array(point2))**2)) 
+# simulation_core.py (CuPy ile pozisyonları kullanarak) 
+# ... SimulationCore.update() içinde ... 
+if self.bacteria: 
+positions = cp.array([[agent.x, agent.y] for agent in self.bacteria]) 
+# Örnek: Tüm çiftler arasındaki mesafeleri hesaplama (basitleştirilmiş) 
+n_agents = len(self.bacteria) 
+if n_agents > 1: 
+for i in range(n_agents): 
+for j in range(i + 1, n_agents): 
+dist = calculate_distance(positions[i], positions[j]) 
+# ... dist kullan ... 
+calculate_distance fonksiyonunu CuPy uyumlu hale getirerek, girdi verileri GPU 
+üzerinde olduğunda GPU hızlandırmasından yararlanılabilir. Bu, verilerin GPU'ya 
+taşındığı ve hesaplamaların orada yapıldığı daha verimli bir iş akışı sağlar. 
+
+
+CPU-GPU Veri Transferini Yönetme İçin En İyi Uygulamalar 
+
+● Transferleri En Aza İndirme: CPU ve GPU arasındaki veri transferi (PCIe yolu 
+üzerinden) genellikle bir darboğazdır. Veriler GPU'ya aktarıldıktan sonra mümkün 
+olduğunca çok sayıda hesaplamayı GPU üzerinde gerçekleştirmeye çalışın. 
+● cupy.asarray() ve .get()'i Verimli Kullanma: 
+
+
+○ cupy.asarray(numpy_array): Bir NumPy dizisini GPU'ya aktarır. Girdi zaten bir 
+CuPy dizisi ise, kopyalama yapmadan geri döndürür. 
+○ cupy.asnumpy(cupy_array) veya cupy_array.get(): Bir CuPy dizisini CPU'ya 
+NumPy dizisi olarak geri aktarır. 
+
+
+
+
+
+● Toplu Transferler: Küçük veri parçalarını sık sık aktarmak yerine, daha büyük veri 
+kümelerini tek seferde aktarmaya çalışın. 
+● Sabitlenmiş Bellek Kullanımı (Gelişmiş): Çok sık transferler için, bazen transfer 
+hızlarını artırabilen sabitlenmiş (sayfalanamayan) CPU belleğini kullanmayı 
+
+
+
+düşünebilirsiniz. 
+
+
+Veri transferlerinin optimize edilmesi, GPU hızlandırmasıyla önemli hızlanmalar elde 
+etmenin anahtarıdır. CPU-GPU arasındaki bağlantının gecikme ve bant genişliği 
+sınırlamaları, verimli veri yönetimini kritik hale getirir. 
+
+Verimli CuPy Kodu Yazma 
+
+● Vektörel Operasyonlar: CuPy, NumPy gibi vektörel operasyonlar için 
+tasarlanmıştır. Dizi elemanları üzerinde açık Python döngülerinden mümkün 
+olduğunca kaçının. Tüm diziler üzerinde işlem yapmak için CuPy'nin yerleşik 
+fonksiyonlarını ve yayınlama (broadcasting) özelliğini kullanın. 
+● Veri Tipleri: CuPy dizilerinde kullanılan veri tiplerine dikkat edin. Daha düşük 
+hassasiyetli tiplerin kullanılması (örneğin, cp.float64 yerine cp.float32), bazen 
+performansı artırabilir ve GPU'daki bellek kullanımını azaltabilir. 
+● Asenkron Operasyonlar (Gelişmiş): CuPy, CPU'nun GPU meşgulken başka 
+görevler gerçekleştirmesine olanak tanıyan asenkron operasyonları destekler. Bu, 
+daha karmaşık senaryolarda daha fazla optimizasyon için faydalı olabilir. 
+
+
+GPU'nun dizi tabanlı operasyonlarını kullanan deyimsel CuPy kodu yazmak, GPU 
+kullanımını en üst düzeye çıkarmak için gereklidir. GPU'lar, büyük dizilerin paralel 
+işlenmesi için optimize edilmiştir, bu nedenle hesaplamaları buna göre yapılandırmak 
+önemlidir. 
+
+CuPy'nin simulation_core.py Yapısına Entegrasyonu 
+
+Aşamalı Entegrasyon Stratejileri 
+
+● Darboğazlarla Başlama: Profil oluşturma sırasında belirlenen performans 
+darboğazlarını (örneğin, mesafe hesaplamaları) hedefleyerek başlayın. 
+● Değişiklikleri İzole Etme: CuPy kullanımını belirli fonksiyonlar veya metotlar 
+içinde kapsayarak kod tabanının geri kalanına olan etkisini en aza indirmeye 
+çalışın. 
+● NumPy Geri Dönüşünü Koruma (İsteğe Bağlı): İlk testler için veya CuPy'ye 
+kolayca taşınamayan işlemler için, NumPy kullanan koşullu bir yürütme yolu 
+koruyabilirsiniz. 
+● Kapsamlı Test: Her entegrasyon adımından sonra, simülasyonun hala doğru 
+çalıştığından ve beklenen sonuçları ürettiğinden emin olun. 
+
+
+Aşamalı ve iyi test edilmiş bir yaklaşım, hata riskini azaltır ve hata ayıklamayı 
+kolaylaştırır. Karmaşık bir kod tabanını tek seferde değiştirmek öngörülemeyen 
+sorunlara yol açabilir; aşamalı bir yaklaşım daha iyi kontrol ve gerekirse geri alma 
+
+
+imkanı sunar. 
+
+Entegrasyon Sırasında Potansiyel Zorluklar ve Çözümler 
+
+● NumPy ve CuPy Dizilerini Karıştırma: NumPy ve CuPy dizilerini birlikte 
+kullanırken dikkatli olun. CuPy genellikle cp.asarray() veya .get() kullanılarak açıkça 
+dönüştürme gerektirir. 
+● Rastgele Sayı Üretimi Tutarlılığı: Simülasyon belirli rastgele sayı dizilerine 
+dayanıyorsa, NumPy ve CuPy'nin ayrı rastgele sayı üreteçlerine sahip olduğunun 
+farkında olun. Tekrarlanabilirlik kritikse, rastgele sayı üreteci durumunu 
+yönetmeniz gerekebilir. 
+● GPU Kodunda Hata Ayıklama: GPU üzerinde hata ayıklama, CPU üzerindekinden 
+daha zorlu olabilir. CuPy hata mesajları sağlar, ancak daha karmaşık sorunlar için 
+özel CUDA hata ayıklama araçlarını kullanmanız gerekebilir. 
+● Kütüphane Bağımlılıkları: CuPy'nin simülasyonun çalıştırıldığı ortamda kurulu 
+olduğundan ve gerekli NVIDIA sürücülerinin de kurulu ve GPU donanımıyla uyumlu 
+olduğundan emin olun. 
+
+
+CuPy'nin entegrasyonu, veri tiplerine, rastgele sayı üretimine ve hata ayıklama 
+tekniklerine dikkatli olmayı gerektirebilir. GPU ortamının kendi özel dikkat edilmesi 
+gereken noktaları vardır. 
+
+SimulationCore.py İçinde Entegrasyonu Gösteren Kod Parçacıkları 
+
+● _populate_initial_state metodunun başlangıç pozisyonları ve enerjileri için 
+CuPy kullanacak şekilde değiştirilmesi (Bölüm 4'te gösterildiği gibi). 
+● update() metodunun başında bakteri pozisyonlarının GPU'ya taşınması ve 
+(darboğaz olarak belirlenirse) CuPy kullanılarak mesafe hesaplamalarının 
+yapılması örneği: 
+Python 
+# SimulationCore.update() içinde 
+if self.bacteria: 
+bacteria_positions_np = np.array([[b.x, b.y] for b in self.bacteria]) 
+bacteria_positions_gpu = cp.asarray(bacteria_positions_np) 
+food_positions_np = np.array([[f.x, f.y] for f in self.food_sources]) 
+food_positions_gpu = cp.asarray(food_positions_np) 
+# Örnek: Her bakteriden en yakın besin kaynağına olan mesafeleri hesaplama 
+if bacteria_positions_gpu.size > 0 and food_positions_gpu.size > 0: 
+from cupyx.scipy.spatial import distance as cpdistance 
+
+
+
+ distances = cpdistance.cdist(bacteria_positions_gpu, food_positions_gpu) 
+nearest_food_indices = cp.argmin(distances, axis=1) 
+# ... nearest_food_indices kullanarak daha fazla işlem ... 
+# GPU hesaplamalarından sonra, diğer kısımlar için gerekirse sonuçları CPU'ya geri aktar 
+# for i, agent in enumerate(self.bacteria): 
+# agent.distance_to_nearest_food = distances.get()[i, nearest_food_indices.get()[i]] 
+cupyx.scipy gibi kütüphaneler, mesafe hesaplamaları gibi görevler için çok faydalı 
+olabilecek SciPy fonksiyonlarının GPU hızlandırmalı versiyonlarını sağlar. Mevcut 
+GPU hızlandırmalı kütüphanelerden yararlanmak, karmaşık hesaplamaların 
+optimizasyon sürecini önemli ölçüde basitleştirebilir. 
+
+
+Performans İyileştirmelerinin Ölçülmesi 
+
+Temel Oluşturma: NumPy Tabanlı Kodun Performans Testi 
+
+CuPy'yi uygulamadan önce, karşılaştırma için bir temel oluşturmak amacıyla orijinal 
+simulation_core.py dosyasının yürütme süresini ölçmek önemlidir. Bölüm 4'te 
+gösterildiği gibi, belirli sayıda simülasyon adımı için ortalama süreyi ölçmek için timeit 
+modülünü kullanın. Gerçekçi performans verileri elde etmek için simülasyonu tipik 
+parametrelerle (ajan sayısı, simülasyon süresi) çalıştırın. Güvenilir bir temel, CuPy ile 
+elde edilen performans kazanımlarını ölçmek için hayati öneme sahiptir. Temel 
+olmadan, optimizasyon çabalarının etkisini objektif olarak değerlendirmek mümkün 
+değildir. 
+
+CuPy Hızlandırmalı Versiyonun Performans Testi 
+
+Belirlenen darboğaz bölümlerine CuPy entegre edildikten sonra, değiştirilmiş kodun 
+yürütme süresini ölçmek için aynı timeit performans testi metodolojisini kullanın. Temel 
+ölçümle aynı simülasyon parametrelerinin kullanıldığından emin olun. Tutarlı 
+performans testi parametreleri, NumPy ve CuPy sürümleri arasında adil bir 
+karşılaştırma için gereklidir. Simülasyon parametrelerindeki herhangi bir farklılık, 
+performans sonuçlarını çarpıtabilir. 
+
+Hızlanmayı Analiz Etme ve Sayısallaştırma 
+
+NumPy ve CuPy sürümlerinin yürütme sürelerini karşılaştırın. Hızlanma şu şekilde 
+hesaplanabilir: Hızlanma = Temel Süre / CuPy Süresi. Elde edilen hızlanma, CuPy 
+kullanılarak hızlandırılan kodun oranına ve GPU uygulamasının verimliliğine bağlı 
+olacaktır. Hızlanma faktörü, GPU hızlandırması yoluyla elde edilen performans 
+
+
+iyileşmesinin net bir ölçüsünü sağlar. Bu metrik, optimizasyon sonrasında 
+simülasyonun ne kadar hızlı çalıştığı sorusunu doğrudan yanıtlar. 
+
+Daha Fazla Optimizasyon Fırsatlarını Belirleme 
+
+Elde edilen hızlanma beklenenden düşükse, CuPy hızlandırmalı kodun daha fazla 
+profilinin çıkarılması, verimsiz veri transferleri veya hala CPU üzerinde çalışan işlemler 
+gibi yeni darboğazları ortaya çıkarabilir. Gerekirse daha fazla optimizasyon için daha 
+gelişmiş CuPy özelliklerini veya hatta özel CUDA çekirdeklerini kullanmayı 
+düşünebilirsiniz. Optimizasyon genellikle yinelemeli bir süreçtir; ilk CuPy uygulaması, 
+iyileştirme için yeni alanlar ortaya çıkarabilir. İlk optimizasyon turundan sonraki 
+performans analizi, daha fazla iyileştirmeye rehberlik edebilir. 
+
+Sonuçlar ve Öneriler 
+
+Bu analiz, simulation_core.py dosyasındaki bakteri simülasyonunun GPU hızlandırması 
+için CuPy kütüphanesinin potansiyelini göstermektedir. Performans darboğazlarının 
+belirlenmesi, NumPy operasyonlarının CuPy karşılıklarıyla değiştirilmesi ve CPU-GPU 
+veri transferinin verimli bir şekilde yönetilmesi, simülasyonun çalışma süresini önemli 
+ölçüde azaltabilir. Özellikle ajanlar arası mesafe hesaplamaları gibi yoğun işlem 
+gerektiren bölümlerin GPU'ya taşınması, büyük performans artışları sağlayabilir. 
+
+Öneriler: 
+
+1. Simülasyonun performans darboğazlarını doğru bir şekilde belirlemek için cProfile 
+ve line_profiler gibi profil oluşturma araçları kullanılmalıdır. 
+2. Belirlenen darboğazlardaki NumPy operasyonları, CuPy kütüphanesindeki 
+karşılıklarıyla aşamalı olarak değiştirilmelidir. 
+3. CPU ve GPU arasındaki veri transferi en aza indirilmeye çalışılmalı ve toplu 
+transferler tercih edilmelidir. 
+4. Verimli CuPy kodu yazmak için vektörel operasyonlar ve uygun veri tipleri 
+kullanılmalıdır. 
+5. CuPy entegrasyonu aşamalı olarak yapılmalı ve her adımdan sonra simülasyonun 
+doğru çalıştığı test edilmelidir. 
+6. Performans iyileştirmeleri, temel alınan NumPy tabanlı kodun performansıyla 
+karşılaştırılarak timeit modülü kullanılarak ölçülmelidir. 
+
+
+Bu adımların izlenmesi, simulation_core.py dosyasındaki bakteri simülasyonunun 
+performansını önemli ölçüde artırabilir, bu da daha karmaşık senaryoların daha kısa 
+sürede simüle edilmesine olanak tanır. 
+
+
+Alıntılanan çalışmalar 
+
+1. Profiling in Python: How to Find Performance Bottlenecks - Real Python, erişim 
+tarihi Mart 26, 2025, https://realpython.com/python-profiling/ 
+2. How to use time profiling in Python to make your code faster - Theodo Data & AI, 
+erişim tarihi Mart 26, 2025, 
+https://data-ai.theodo.com/en/technical-blog/python-profiling 
+3. The Python Profilers — Python 3.13.2 documentation, erişim tarihi Mart 26, 2025, 
+https://docs.python.org/3/library/profile.html 
+4. cProfile - How to profile your python code | ML+ - Machine Learning Plus, erişim 
+tarihi Mart 26, 2025, 
+https://www.machinelearningplus.com/python/cprofile-how-to-profile-your-pyth 
+on-code/ 
+5. Profiling Python - NERSC Documentation, erişim tarihi Mart 26, 2025, 
+https://docs.nersc.gov/development/languages/python/profiling-debugging-pyth 
+on/ 
+6. Profiling with Python tools - GitHub Pages, erişim tarihi Mart 26, 2025, 
+https://nesi.github.io/perf-training/python-scatter/profiling-cprofile 
+7. data-ai.theodo.com, erişim tarihi Mart 26, 2025, 
+https://data-ai.theodo.com/en/technical-blog/python-profiling#:~:text=To%20use 
+%20cProfile%20%2C%20you%20first,results%20look%20like%20later%20on. 
+8. How do you use cProfile to profile a Python script? - w3resource, erişim tarihi 
+Mart 26, 2025, 
+https://www.w3resource.com/python-interview/how-do-you-use-cprofile-to-pro 
+file-a-python-script.php 
+9. How do I profile a Python script? - Stack Overflow, erişim tarihi Mart 26, 2025, 
+https://stackoverflow.com/questions/582336/how-do-i-profile-a-python-script 
+10. Profiling Python Code: Best Profiling Tools You Should Know - Turing, erişim tarihi 
+Mart 26, 2025, https://www.turing.com/kb/profiling-python-code 
+11. What is the best way to perform line profiler in Python to achieve this?, erişim 
+tarihi Mart 26, 2025, 
+https://community.lambdatest.com/t/what-is-the-best-way-to-perform-line-profi 
+ler-in-python-to-achieve-this/34687 
+12. Top 7 Python Profiling Tools for Performance - Daily.dev, erişim tarihi Mart 26, 
+2025, https://daily.dev/blog/top-7-python-profiling-tools-for-performance 
+13. Python Profiling - Princeton Research Computing, erişim tarihi Mart 26, 2025, 
+https://researchcomputing.princeton.edu/python-profiling 
+14. pyutils/line_profiler: Line-by-line profiling for Python - GitHub, erişim tarihi Mart 
+26, 2025, https://github.com/pyutils/line_profiler 
+15. Line Profiler — line_profiler 4.1.2 documentation, erişim tarihi Mart 26, 2025, 
+https://kernprof.readthedocs.io/ 
+16. Use line_profiler to profile your python code - Deep Learning, erişim tarihi Mart 
+26, 2025, https://dzlab.github.io/dltips/en/more/profiling/ 
+
+
+
+Kuantum Pekiştirmeli Öğrenme ve Kuantum Oyun 
+Teorisi Algoritmalarının Qiskit v1.4.2 ile Pratik 
+Uygulaması 
+
+Kuantum hesaplama tabanlı çoklu-ajan karar verme sistemleri, klasik yaklaşımların ötesinde yeni 
+imkanlar sunmaktadır. Bu araştırma raporu, NeoMag v3 projesi kapsamında Kuantum Pekiştirmeli 
+Öğrenme (QRL) ve Kuantum Oyun Teorisi (QGT) algoritmalarının Qiskit v1.4.2 kütüphanesi 
+kullanılarak nasıl uygulanabileceğini incelemektedir. Çalışma, ajan tabanlı sistemlerde kuantum 
+avantajından yararlanma, algoritmik yapıların uygulanması ve DecisionMechanism arayüzüne 
+entegrasyon önerilerini içermektedir. Özellikle dağıtık kuantum Q-öğrenme, dolaşıklık-geliştirilmiş 
+öğrenme yaklaşımları ve Hilbert uzayı formülasyonuna dayalı çok-ajanlı kuantum oyun yapıları 
+pratik kod örnekleriyle sunulmuştur. 
+Kuantum Pekiştirmeli Öğrenme (QRL) Algoritmaları 
+
+Kuantum pekiştirmeli öğrenme, klasik pekiştirmeli öğrenme yöntemlerini kuantum hesaplamanın 
+benzersiz özelliklerinden faydalanarak genişleten bir yaklaşımdır. Çoklu-ajan sistemlerinde QRL, 
+ajanların karmaşık ortamlarda daha etkili karar vermesini sağlayabilir. 
+Kuantum Q-Öğrenme Varyantları 
+
+Kuantum Q-öğrenme, durum-eylem uzaylarını kuantum durumlarında kodlayarak ve kuantum 
+paralelliğinden yararlanarak klasik Q-öğrenmeyi genişletir. Çoklu-ajan senaryoları için iki ana 
+yaklaşım bulunmaktadır: 
+Dağıtık Kuantum Q-Öğrenme 
+
+Bu yaklaşımda, her ajan kendi Q-değerlerini temsil etmek için kendi kuantum devresini tutarken, 
+periyodik olarak klasik kanallar üzerinden bilgi alışverişi yapar. Ajanlar yarı-bağımsız çalıştığında 
+ancak ortak hedeflerde koordinasyon gerektiğinde kullanışlıdır 
+[1] 
+. 
+def encode_agent_state(agent_position, agent_energy, neighbors_info): 
+# Özellikleri genlik kodlaması için normalleştir 
+features = np.array([agent_position[^0], agent_position[^1], 
+agent_energy, *neighbors_info]) 
+features = features / np.linalg.norm(features) 
+# Gerekli kübit sayısını belirle 
+num_qubits = int(np.ceil(np.log2(len(features)))) 
+# Kuantum devresi oluştur 
+qc = QuantumCircuit(num_qubits)
+ # Genlik kodlaması kullan 
+qc.initialize(features, range(num_qubits)) 
+return qc 
+Bu kodlama fonksiyonu, ajanın pozisyon, enerji seviyesi ve komşu bilgisi gibi klasik özelliklerini 
+kuantum durumlarına dönüştürür. Sürekli özellikleri kuantum durumlarının genlikleri olarak temsil 
+eder 
+[1] 
+. 
+Dolaşıklık-Geliştirilmiş Q-Öğrenme 
+
+Bu yaklaşım, ajanlar arasındaki korelasyonları dolaşık kuantum durumları kullanarak açıkça 
+modellemektedir. Ajan kararları doğal olarak birbirine bağımlı olduğunda, ortak durum-eylem 
+uzaylarını dolaşık kübitler kullanarak temsil etmek, klasik temsillerden daha verimli bir şekilde 
+karmaşık korelasyonları yakalayabilir 
+[1] 
+. 
+Kuantum Politika Gradyan Yöntemleri 
+
+Politika gradyan yöntemlerinin kuantum uygulamaları, politikaları temsil etmek için kuantum sinir 
+ağlarını (QNN) kullanır: 
+def create_quantum_policy_circuit(num_qubits, params): 
+qc = QuantumCircuit(num_qubits) 
+# Giriş durumunu kodla 
+for i in range(num_qubits): 
+qc.ry(params[i], i) 
+# Dolaşıklık katmanı 
+for i in range(num_qubits-1): 
+qc.cx(i, i+1) 
+# İkinci rotasyon katmanı 
+param_idx = num_qubits 
+for i in range(num_qubits): 
+qc.ry(params[param_idx + i], i) 
+return qc 
+İki önemli kuantum politika gradyan yöntemi öne çıkar: 
+Kuantum Yakınsal Politika Optimizasyonu (QPPO): Politika temsilinde parametreleştirilmiş 
+kuantum devreleri kullanarak PPO algoritmasını genişletir 
+[1] 
+. 
+Değişimsel Kuantum Aktör-Kritik: Hem politikayı (aktör) hem de değer fonksiyonunu (kritik) 
+değişimsel kuantum devreleri kullanarak uygular. Bu, kuantum avantajının temsilde var 
+olduğu ortamlarda faydalıdır 
+[1] 
+. 
+
+
+
+Qiskit ile QRL Entegrasyonu 
+
+Qiskit, QRL uygulaması için özellikle faydalı birkaç modül sunar: 
+from qiskit_machine_learning.neural_networks import SamplerQNN 
+from qiskit_machine_learning.connectors import TorchConnector 
+from qiskit.algorithms.optimizers import SPSA 
+# Politika temsili için bir QNN oluştur 
+def create_quantum_policy_network(num_qubits): 
+# Eğitilebilir parametrelere sahip kuantum devresi tanımla 
+params = Parameters('θ_{}'.format(range(2*num_qubits))) 
+qc = create_quantum_policy_circuit(num_qubits, params) 
+# QNN'e dönüştür 
+qnn = SamplerQNN( 
+circuit=qc, 
+input_params=[], 
+weight_params=params, 
+interpret=interpret_measurement 
+) 
+# TorchConnector eğitim için PyTorch ile entegrasyona izin verir 
+quantum_model = TorchConnector(qnn) 
+return quantum_model 
+Kuantum politikanın eğitimi için, Qiskit'in optimizasyon modüllerini kullanabiliriz: 
+def train_quantum_policy(quantum_model, training_data, learning_rate=0.01): 
+optimizer = SPSA(maxiter=100, learning_rate=learning_rate) 
+# Eğitim döngüsü uygulaması 
+for episode in range(num_episodes): 
+# Deneyim topla 
+states, actions, rewards = collect_experience(env, current_policy) 
+# Gradyanları hesapla ve parametreleri güncelle 
+loss = compute_policy_loss(quantum_model, states, actions, rewards) 
+optimizer.minimize(loss, quantum_model.parameters) 
+Simülasyon Döngüsü ile Senkronizasyon 
+
+Kuantum hesaplamasını klasik simülasyonla entegre etmek dikkatli bir senkronizasyon gerektirir: 
+class QuantumRLAgent: 
+def __init__(self, state_dimension, action_dimension): 
+self.quantum_policy = create_quantum_policy_network(num_qubits=state_dimension) 
+self.optimizer = SPSA(maxiter=1, learning_rate=0.01) 
+self.experience_buffer = [] 
+def decide_action(self, state): 
+# Durumu kuantum devresine kodla
+ encoded_state = encode_agent_state(state) 
+# Eylem olasılıklarını almak için kuantum devresini çalıştır 
+action_probs = self.quantum_policy(encoded_state) 
+# Olasılıklara dayalı olarak eylem örnekle 
+action = np.random.choice(len(action_probs), p=action_probs) 
+return action 
+def learn_from_experience(self): 
+if len(self.experience_buffer) < batch_size: 
+return 
+# Deneyimi işle ve kuantum politikasını güncelle 
+states, actions, rewards = process_experience(self.experience_buffer) 
+def loss_function(params): 
+# Mevcut parametreleri ayarla 
+self.quantum_policy.set_parameters(params) 
+# Politika kaybını hesapla 
+return compute_policy_loss(self.quantum_policy, states, actions, rewards) 
+# Parametreleri optimize et 
+self.optimizer.minimize(loss_function, self.quantum_policy.parameters) 
+# Öğrendikten sonra tamponu temizle 
+self.experience_buffer = [] 
+Kuantum Oyun Teorisi (QGT) Algoritmaları 
+
+Kuantum oyun teorisi, oyun teorik problemleri kuantum mekaniğinin ilkelerini kullanarak yeniden 
+formüle etmeyi amaçlar. Bu bölümde, QGT'nin Qiskit ile pratik uygulamasına odaklanacağız. 
+Kuantum Oyun Çerçevesinin Uygulanması 
+
+Kuantum oyun teorisi Hilbert uzayı formülasyonunda, oyuncuların stratejileri Hilbert uzayındaki 
+vektörlerle, oyuncular arasındaki kuantum korelasyonu ise J(γ) korelasyon operatörü ile temsil 
+edilir 
+[1] 
+. Bu teorik yapıyı Qiskit'te şu şekilde uygulayabiliriz: 
+def create_quantum_game_circuit(num_players=2, num_strategies=2): 
+# Her oyuncu log2(num_strategies) kübit gerektirir 
+qubits_per_player = int(np.ceil(np.log2(num_strategies))) 
+total_qubits = num_players * qubits_per_player 
+qc = QuantumCircuit(total_qubits) 
+# Başlangıç durumu hazırlama 
+for i in range(total_qubits): 
+qc.h(i) 
+# J(γ) korelasyon operatörünü uygula
+ implement_correlation_operator(qc, gamma_1, gamma_2) 
+# Oyuncular strateji operatörlerini (üniter işlemler) uygular 
+# Oyuncu 1'in stratejisi 
+player1_strategy_circuit(qc, player1_params, qubits=[0, 1]) 
+# Oyuncu 2'nin stratejisi 
+player2_strategy_circuit(qc, player2_params, qubits=[2, 3]) 
+# Kazançları belirlemek için son ölçüm 
+qc.measure_all() 
+return qc 
+Korelasyon operatörünün uygulanması, oyuncular arasındaki kuantum dolaşıklığı oluşturmak için 
+önemlidir: 
+def implement_correlation_operator(qc, gamma_1, gamma_2): 
+""" 
+Makaledeki J(γ) korelasyon operatörünü uygular 
+J(γ) = J(0) exp(iγ1S/2) exp(iγ2T/2) 
+""" 
+# S yer değiştirme operatörü bileşenini uygula 
+for i in range(num_players): 
+qc.rz(gamma_1, i) 
+qc.cx(i, i+num_players) 
+qc.rz(-gamma_1, i+num_players) 
+qc.cx(i, i+num_players) 
+# T operatörü bileşenini uygula 
+# (Stratejilerin eşzamanlı yeniden adlandırılması) 
+for i in range(num_players*2): 
+qc.rz(gamma_2, i) 
+Çok Oyunculu Senaryolara Genişletme 
+
+İkiden fazla oyuncu için, çerçeve şu şekilde genişletilebilir: 
+def n_player_correlation(qc, gammas, player_qubits): 
+""" 
+Korelasyon parametrelerine göre N oyuncu arasında dolaşıklık oluşturur 
+gammas: Oyuncu çiftleri arasındaki korelasyon parametrelerinin sözlüğü 
+player_qubits: Her oyuncu için kübit indekslerinin listesi 
+""" 
+for i in range(len(player_qubits)): 
+for j in range(i+1, len(player_qubits)): 
+if (i,j) in gammas: 
+# Oyuncu i ve j arasında korelasyon uygula 
+gamma = gammas[(i,j)] 
+# Oyuncuların kübitleri arasında kontrollü-rotasyon kapıları uygula 
+for qi in player_qubits[i]:
+ for qj in player_qubits[j]: 
+qc.cry(gamma, qi, qj) 
+Bu yaklaşım, genelleştirilmiş korelasyon operatörleri kullanarak J(γ) kavramını çoklu oyunculara 
+genişletir. Karmaşık çoklu ajan senaryoları için, ajan çiftleri arasındaki alt oyunların daha yüksek 
+seviyeli oyunlara beslendiği hiyerarşik oyun yapıları uygulanabilir 
+[1] 
+. 
+Ajanlar Arası Dolaşıklık Yönetimi 
+
+Çoklu ajanlı QGT'de dolaşıklık, ilginç dinamikler yaratır ancak dikkatli yönetim gerektirir: 
+class QuantumGameManager: 
+def __init__(self, num_agents, strategies_per_agent): 
+self.num_agents = num_agents 
+self.strategies_per_agent = strategies_per_agent 
+self.qubits_per_agent = int(np.ceil(np.log2(strategies_per_agent))) 
+self.total_qubits = num_agents * self.qubits_per_agent 
+# Ajanlar arasında korelasyon parametreleri oluştur 
+self.correlation_params = self._initialize_correlation_params() 
+def _initialize_correlation_params(self): 
+"""Ajan çiftleri arasında korelasyon parametrelerini başlat""" 
+params = {} 
+for i in range(self.num_agents): 
+for j in range(i+1, self.num_agents): 
+# Başlangıç korelasyon parametreleri ajan ilişkilerine dayanabilir 
+params[(i,j)] = np.random.uniform(0, np.pi/2) 
+return params 
+def create_game_circuit(self, agent_strategies): 
+""" 
+Verilen ajan stratejileriyle oyunu temsil eden kuantum devresi oluştur 
+agent_strategies: Her ajanın kuantum stratejisi için parametre vektörlerinin list 
+""" 
+qc = QuantumCircuit(self.total_qubits) 
+# Başlangıç durumu hazırlama 
+qc.h(range(self.total_qubits)) 
+# Korelasyon işlemlerini uygula 
+for (i,j), gamma in self.correlation_params.items(): 
+i_qubits = range(i*self.qubits_per_agent, (i+1)*self.qubits_per_agent) 
+j_qubits = range(j*self.qubits_per_agent, (j+1)*self.qubits_per_agent) 
+# Dolaştırma işlemlerini uygula 
+for qi in i_qubits: 
+for qj in j_qubits: 
+qc.cry(gamma, qi, qj) 
+# Her ajanın stratejisini uygula 
+for i, strategy in enumerate(agent_strategies): 
+agent_qubits = range(i*self.qubits_per_agent, (i+1)*self.qubits_per_agent) 
+self._apply_agent_strategy(qc, strategy, agent_qubits)
+ # Ölçüm kurulumu 
+qc.measure_all() 
+return qc 
+def _apply_agent_strategy(self, qc, strategy_params, qubits): 
+"""Bir ajanın kuantum stratejisini kübitlerinde uygula""" 
+# Stratejiyi temsil eden parametreleştirilmiş kuantum devresi 
+param_index = 0 
+# İlk rotasyon katmanı 
+for q in qubits: 
+qc.ry(strategy_params[param_index], q) 
+param_index += 1 
+# Ajanın kübitleri içinde dolaşıklık 
+for i in range(len(qubits)-1): 
+qc.cx(qubits[i], qubits[i+1]) 
+# İkinci rotasyon katmanı 
+for q in qubits: 
+qc.ry(strategy_params[param_index], q) 
+param_index += 1 
+DecisionMechanism Arayüzüne Entegrasyon 
+
+NeoMag v3 projesindeki DecisionMechanism arayüzüne kuantum temelli karar verme 
+mekanizmalarını entegre etmek için bir tasarım önerisi sunacağız. 
+QuantumDecisionMechanism Sınıfı Tasarımı 
+
+class QuantumDecisionMechanism(DecisionMechanism): 
+def __init__(self, num_qubits, strategy_params=None): 
+super().__init__() 
+self.num_qubits = num_qubits 
+# Strateji parametrelerini başlat (sağlanmadıysa) 
+if strategy_params is None: 
+# Rastgele başlangıç stratejisi 
+self.strategy_params = np.random.uniform(0, 2*np.pi, 2*num_qubits) 
+else: 
+self.strategy_params = strategy_params 
+# Kararlar için kuantum devresi oluştur 
+self.quantum_circuit = self._create_decision_circuit() 
+def _create_decision_circuit(self): 
+qc = QuantumCircuit(self.num_qubits) 
+# Parametreleştirilmiş devre yapısı 
+# İlk rotasyon katmanı 
+for i in range(self.num_qubits): 
+qc.ry(self.strategy_params[i], i)
+ # Dolaşıklık katmanı 
+for i in range(self.num_qubits-1): 
+qc.cx(i, i+1) 
+# İkinci rotasyon katmanı 
+for i in range(self.num_qubits): 
+qc.ry(self.strategy_params[i+self.num_qubits], i) 
+return qc 
+def decide(self, state, available_actions): 
+"""Kuantum hesaplama kullanarak karar ver""" 
+# Durumu kuantum devresinde kodla 
+encoded_state = self._encode_state(state) 
+# Kuantum devresini çalıştır 
+result = self._execute_circuit(encoded_state) 
+# Ölçüm sonuçlarından eylem seç 
+action = self._select_action_from_measurement(result, available_actions) 
+return action 
+def _encode_state(self, state): 
+"""Durum bilgisini kuantum devresine kodla""" 
+# Devreyi kopyala 
+qc = self.quantum_circuit.copy() 
+# Durum özelliklerini normalleştir 
+features = self._normalize_state_features(state) 
+# Durum özelliklerini kuantum devresine kodla 
+for i, feature in enumerate(features): 
+if i < self.num_qubits: 
+qc.ry(feature, i) 
+return qc 
+def _execute_circuit(self, circuit): 
+"""Kuantum devresini çalıştır""" 
+# Ölçüm ekle 
+meas_circ = circuit.copy() 
+meas_circ.measure_all() 
+# Simülatörde çalıştır 
+backend = Aer.get_backend('qasm_simulator') 
+job = execute(meas_circ, backend, shots=1024) 
+result = job.result() 
+return result.get_counts() 
+def _select_action_from_measurement(self, counts, available_actions): 
+"""Ölçüm sonuçlarından eylem seç""" 
+# En olası ölçüm sonucunu bul 
+most_probable = max(counts, key=counts.get)
+ # İkili sonucu ondalık sayıya dönüştür 
+binary_result = most_probable 
+decimal_result = int(binary_result, 2) 
+# Sonucu kullanılabilir eylemlere eşle 
+action_idx = decimal_result % len(available_actions) 
+chosen_action = available_actions[action_idx] 
+return chosen_action 
+def _normalize_state_features(self, state): 
+"""Durum özelliklerini [0, 2π] aralığında normalleştir""" 
+features = [] 
+# Her durum özelliği için 
+for key, value in state.items(): 
+# Sayısal değerleri [0, 2π] aralığına normalleştir 
+if isinstance(value, (int, float)): 
+normalized = (value - state.get(f"{key}_min", 0)) / (state.get(f"{key}_ma 
+normalized = normalized * 2 * np.pi 
+features.append(normalized) 
+return features 
+Ajan Etkileşimine Entegrasyon 
+
+Kuantum oyun teorisini çoklu ajan etkileşimine entegre etmek için: 
+def quantum_interact(agent1, agent2, quantum_game_manager): 
+"""Kuantum oyun teorisi kullanarak iki ajan arasında kuantum etkileşimi""" 
+# Mevcut stratejileri al (kuantum devresi parametreleri olarak) 
+strategy1 = agent1.get_quantum_strategy() 
+strategy2 = agent2.get_quantum_strategy() 
+# Kuantum oyun devresini oluştur ve çalıştır 
+qc = quantum_game_manager.create_game_circuit([strategy1, strategy2]) 
+result = execute(qc, backend, shots=1024).result() 
+counts = result.get_counts() 
+# Ölçüm sonuçlarından kazançları hesapla 
+payoff1, payoff2 = compute_payoffs_from_counts(counts) 
+# Ajanlar kazançlara göre stratejilerini günceller 
+agent1.update_strategy(payoff1) 
+agent2.update_strategy(payoff2) 
+return payoff1, payoff2
+Kuantum Gürültüsü ve Hata Azaltma Yöntemleri 
+
+Pratik QRL ve QGT uygulamaları için kuantum gürültüsü önemli bir zorluk oluşturur. Bu bölümde, 
+gürültü etkilerini azaltmak için yöntemler sunacağız. 
+Hata Azaltma Teknikleri 
+
+from qiskit.providers.aer.noise import NoiseModel 
+from qiskit.providers.aer import QasmSimulator 
+def execute_with_noise_mitigation(quantum_circuit, shots=1024): 
+# Cihaz özelliklerine dayalı gürültü modeli oluştur 
+noise_model = NoiseModel.from_backend(backend) 
+# Simülatörü gürültü modeliyle yapılandır 
+simulator = QasmSimulator(noise_model=noise_model) 
+# Hata azaltma ile çalıştır 
+result = execute( 
+quantum_circuit, 
+simulator, 
+shots=shots, 
+optimization_level=3, 
+).result() 
+# Ölçüm hatası azaltma uygula 
+mitigated_result = measurement_error_mitigation(result) 
+return mitigated_result 
+İki ana hata azaltma tekniği vardır: 
+Sıfır-gürültü ekstrapolasyonu: Devreleri farklı gürültü seviyelerinde çalıştırıp sıfır gürültüye 
+ekstrapolasyon yapar 
+[1] 
+. 
+Ölçüm hatası azaltma: Ölçüm sonuçlarına düzeltme matrisleri uygular 
+[1] 
+. 
+
+
+Gürbüz Algoritma Tasarımı 
+
+Gürültüye dayanıklı algoritmalar tasarlarken şu prensipler izlenmelidir: 
+Mümkün olduğunca sığ devreler kullanın
+[1] 
+. 
+Daha az dolaştırma kapısı içeren parametreleştirilmiş devreler kullanın
+[1] 
+. 
+
+
+Sonuç ve Öneriler 
+
+Kuantum Pekiştirmeli Öğrenme ve Kuantum Oyun Teorisi algoritmalarının Qiskit v1.4.2 ile 
+NeoMag v3 projesinde uygulanabilirliğine dair incelememiz, bu yenilikçi yaklaşımların çoklu-ajan 
+sistemlerinde klasik algoritmalara göre potansiyel avantajlar sunduğunu göstermektedir. Özellikle 
+dağıtık ve dolaşıklık-geliştirilmiş QRL algoritmaları, karmaşık ajan kararları için etkili bir çerçeve 
+sağlarken, kuantum oyun teorisi yaklaşımları ajan etkileşimlerini zenginleştirme potansiyeline 
+sahiptir.
+Pratikte uygulamaya geçerken dikkat edilmesi gereken en önemli noktalar şunlardır: 
+Kuantum gürültüsü ve hatalarla başa çıkmak için sağlam stratejiler geliştirilmesi 
+DecisionMechanism arayüzü ile sorunsuz entegrasyon sağlanması 
+Durum kodlama stratejilerinin problem özelliklerine göre optimize edilmesi 
+Ölçeklendirilebilirlik sorunlarının aşılması için hibrit klasik-kuantum yaklaşımlarının 
+değerlendirilmesi 
+
+
+Gelecek çalışmalarda, önerilen prototip uygulamaların gerçek dünya senaryolarında test edilmesi 
+ve performans karşılaştırmalarının yapılması, kuantum tabanlı çoklu-ajan sistemlerinin pratik 
+değerini daha net ortaya koyacaktır. 
+⁂ 
+https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/60364002/5f872476-605e-4346-8412- 
+cf154d3987d8/Arastirma_QRL_QGT_Uygulama.pdf 
+
+
+
+NeoMag v3 Simülasyonu Performans Analizi ve 
+Optimizasyon Stratejileri 
+
+Mevcut NeoMag v3 simülasyonunun performans darboğazlarını belirleyip, CuPy tabanlı GPU 
+hızlandırma ve diğer optimizasyon teknikleriyle performansı iyileştirme stratejilerini içeren bu 
+rapor, gelecekteki QRL ve İletişim mekanizmalarının da potansiyel etkilerini değerlendirmektedir. 
+Performans Analiz Metodolojisi ve Darboğaz Tespiti 
+
+cProfile ve line_profiler Entegrasyonu 
+
+Simülasyon performansını optimize etmek için öncelikle en çok işlem zamanını tüketen bölümleri 
+belirlememiz gerekmektedir. Python kodunun performansını analiz etmek için cProfile ve 
+line_profiler gibi profil oluşturma araçları kullanılabilir 
+[1] 
+. Bu araçlar, kodun farklı bölümlerinin 
+çalışma süreleri ve çağrılma sayıları hakkında detaylı bilgiler sağlar. 
+Python'un standart kütüphanesinde yer alan cProfile modülü, programın deterministik profilini 
+çıkarır ve her fonksiyon çağrısının süresini ve sayısını gösteren istatistikler üretir 
+[1] 
+. Kullanımı için 
+komut satırına şu komutu yazmak yeterlidir: 
+python -m cProfile -o profile_output.prof simulation_core.py 
+Profil çıktısını görselleştirmek için SnakeViz gibi araçlar kullanılabilir: 
+pip install snakeviz 
+snakeviz profile_output.prof 
+Daha ayrıntılı satır bazlı analiz için line_profiler kullanılabilir: 
+pip install line_profiler 
+# İlgili fonksiyonları @profile dekoratörü ile işaretledikten sonra 
+kernprof -l simulation_core.py 
+python -m line_profiler simulation_core.py.lprof
+Potansiyel Darboğaz Alanları 
+
+NeoMag v3 simülasyonunda aşağıdaki alanların performans darboğazı oluşturma olasılığı 
+yüksektir: 
+SimulationCore.update() metodu - Simülasyonun ana döngüsü 
+Bakteri listesi üzerindeki döngüler - Özellikle çok sayıda bakteri olduğunda 
+Bakteri-bakteri etkileşimleri - Uzaklık hesaplamaları ve etkileşim mantığı 
+Bakteri-besin kaynağı etkileşimleri - En yakın besin kaynaklarını bulma işlemleri 
+Calculate_distance fonksiyonu - Pozisyon hesaplamalarında yaygın kullanım 
+
+
+Özellikle simülasyondaki ajan sayısı arttıkça, ajanlar arası mesafe hesaplamaları O(n²) 
+karmaşıklığa sahip olacak ve performansı önemli ölçüde etkileyecektir 
+[1] 
+. 
+NumPy Operasyonlarını CuPy ile GPU'ya Taşıma 
+
+GPU Hızlandırması için CuPy Entegrasyonu 
+
+CuPy, NumPy'a benzer bir API sağlayan ancak GPU üzerinde çalışan bir kütüphanedir. 
+Simülasyondaki darboğazları CuPy kullanarak optimize etmek için aşağıdaki temel dönüşümler 
+uygulanabilir: 
+1. Rastgele Sayı Üretimi: 
+
+# Orijinal (NumPy) 
+import numpy as np 
+x = random.uniform(0, self.width) 
+y = random.uniform(0, self.height) 
+initial_energy = random.gauss(config.INITIAL_ENERGY_MEAN, config.INITIAL_ENERGY_STDDEV) 
+# Değiştirilmiş (CuPy) 
+import cupy as cp 
+x = float(cp.random.uniform(0, self.width)) 
+y = float(cp.random.uniform(0, self.height)) 
+initial_energy = float(cp.random.normal(config.INITIAL_ENERGY_MEAN, config.INITIAL_ENERGY 
+2. Mesafe Hesaplama: 
+
+# Orijinal (NumPy) 
+def calculate_distance(point1, point2): 
+return np.sqrt(np.sum((np.array(point1) - np.array(point2))**2)) 
+# CuPy uyumlu 
+def calculate_distance(point1, point2): 
+if isinstance(point1, cp.ndarray) and isinstance(point2, cp.ndarray): 
+return cp.sqrt(cp.sum((point1 - point2)**2)) 
+else: 
+return np.sqrt(np.sum((np.array(point1) - np.array(point2))**2))
+CPU-GPU Veri Transfer Maliyetleri ve Optimizasyonu 
+
+CuPy kullanımında en önemli darboğaz, CPU ve GPU arasındaki veri transferidir. Bu transferler 
+PCIe yolu üzerinden gerçekleşir ve önemli bir gecikmeye neden olabilir 
+[1] 
+. Bu nedenle: 
+Transferleri Minimize Etme: Veri bir kez GPU'ya aktarıldıktan sonra, mümkün olduğunca 
+çok işlemi GPU üzerinde gerçekleştirmelidir. 
+Toplu Veri Transferleri: Küçük parçalar halinde yerine, daha büyük veri bloklarını tek 
+seferde aktarmak daha verimlidir. 
+cupy.asarray() ve .get() Fonksiyonlarının Doğru Kullanımı: 
+# CPU'dan GPU'ya 
+bacteria_positions_gpu = cp.asarray(bacteria_positions_np) 
+# GPU'dan CPU'ya 
+results_np = bacteria_positions_gpu.get() # veya cp.asnumpy(bacteria_positions_gpu) 
+Sabitlenmiş Bellek Kullanımı (İleri Düzey): Çok sık veri transferi gerektiren senaryolarda, 
+sayfalanamayan CPU belleği kullanmak transfer hızlarını artırabilir. 
+
+
+SimulationCore.py'nin GPU Optimizasyonu 
+
+Aşağıdaki kod parçaları, simülasyonun kritik bölümlerinin CuPy ile nasıl optimize edilebileceğini 
+göstermektedir: 
+1. Bakteriler Arası Etkileşim Optimizasyonu: 
+
+# SimulationCore.update() içinde 
+if len(self.bacteria) > 1: 
+# Tüm bakteri pozisyonlarını topla 
+bacteria_positions_np = np.array([[b.x, b.y] for b in self.bacteria]) 
+bacteria_positions_gpu = cp.asarray(bacteria_positions_np) 
+# cupyx.scipy ile mesafe matrisini hesapla 
+from cupyx.scipy.spatial import distance as cp_distance 
+distance_matrix = cp_distance.pdist(bacteria_positions_gpu) 
+distance_matrix = cp_distance.squareform(distance_matrix) 
+# Eşik değerinden küçük mesafeleri bul 
+interaction_mask = (distance_matrix > 0) & (distance_matrix < self.interaction_thresh 
+interaction_indices = cp.argwhere(interaction_mask).get() 
+# Etkileşimleri işle 
+for i, j in interaction_indices: 
+if i < j: # Çift sayımı önle 
+self.bacteria[i].interact_with(self.bacteria[j])
+2. Besin Arama Optimizasyonu: 
+
+# SimulationCore.update() içinde 
+if self.bacteria and self.food_sources: 
+bacteria_positions_gpu = cp.asarray([[b.x, b.y] for b in self.bacteria]) 
+food_positions_gpu = cp.asarray([[f.x, f.y] for f in self.food_sources]) 
+# Her bakteri için en yakın besin kaynağını bul 
+from cupyx.scipy.spatial import distance as cp_distance 
+distances = cp_distance.cdist(bacteria_positions_gpu, food_positions_gpu) 
+nearest_food_indices = cp.argmin(distances, axis=1).get() 
+nearest_food_distances = cp.min(distances, axis=1).get() 
+# Sonuçları bakterilere uygula 
+for i, agent in enumerate(self.bacteria): 
+if nearest_food_distances[i] < agent.perception_range: 
+food = self.food_sources[nearest_food_indices[i]] 
+agent.move_towards(food) 
+Gelecekteki QRL ve İletişim Mekanizmalarının Performans Etkileri 
+
+Beklenen Darboğazlar ve Etkiler 
+
+QRL (Quantum Reinforcement Learning) modülünün eklenmesi: 
+Karar verme süreçleri için hesaplama karmaşıklığı artacak 
+Her bakteri için durum değerlendirmesi ve aksiyon seçimi ek yük getirecek 
+Q-değerlerinin güncellenmesi ve depolanması bellek kullanımını artıracak 
+
+
+
+İletişim Mekanizmaları: 
+Bakteriler arası mesaj paylaşımı ek hesaplama yükü getirecek 
+İletişim ağının yönetimi ve mesaj yönlendirme O(n²) karmaşıklığa sahip olabilir 
+Mesaj öncelik kuyrukları bellek tüketimini artıracak 
+
+
+
+
+
+Optimizasyon Stratejileri 
+
+1. Algoritmik İyileştirmeler: 
+
+Seyrek (Sparse) Etkileşim Matriksleri: Tüm bakteri çiftleri arasında değil, yalnızca 
+potansiyel etkileşimde bulunanlar arasında hesaplama yapma. 
+Erken Durdurma Mekanizmaları: Gereksiz hesaplamaları önlemek için optimizasyon. 
+Kademeli QRL Uygulaması: Tüm bakteriler için değil, belirli kriterleri karşılayan bakteriler için 
+QRL hesaplamalarını gerçekleştirme. 
+
+
+
+2. Uzamsal Veri Yapıları: 
+
+Uzamsal Karma (Spatial Hashing): O(n²)'den O(n)'e yakın karmaşıklığa düşürmek için 
+uzamsal karma kullanımı 
+[1] 
+. 
+def spatial_hash(position, cell_size): 
+return (int(position[^0] / cell_size), int(position[^1] / cell_size)) 
+# Bakterileri hücrelere yerleştir 
+spatial_grid = {} 
+for bacteria in self.bacteria: 
+cell = spatial_hash((bacteria.x, bacteria.y), self.cell_size) 
+if cell not in spatial_grid: 
+spatial_grid[cell] = [] 
+spatial_grid[cell].append(bacteria) 
+# Yalnızca yakın hücrelerdeki bakteriler arasında etkileşim 
+for bacteria in self.bacteria: 
+cell = spatial_hash((bacteria.x, bacteria.y), self.cell_size) 
+nearby_cells = [cell, (cell[^0]+1, cell[^1]), (cell[^0], cell[^1]+1), ...] # Komş 
+# Sadece yakın hücrelerdeki bakteriler ile etkileşimi kontrol et 
+Quadtree/Octree: Uzamsal bölme yapıları kullanarak yakınlık sorgularını hızlandırma. 
+
+
+3. Paralelleştirme Teknikleri: 
+
+Multiprocessing: Bağımsız hesaplamaları farklı CPU çekirdeklerine dağıtma. 
+from multiprocessing import Pool 
+def process_bacterium(bacterium_data): 
+# QRL hesaplamaları, çevre algılama vb. 
+return updated_data 
+with Pool(processes=cpu_count()) as pool: 
+updated_data = pool.map(process_bacterium, [b.serialize() for b in self.bacteria] 
+Hibrit CPU-GPU Hesaplama: Bazı hesaplamalar için CPU, diğerleri için GPU kullanma. 
+
+
+Bellek Optimizasyonu Teknikleri 
+
+Mevcut Bellek Kullanımı Analizi 
+
+Simülasyonun bellek kullanımını analiz etmek için Python'un memory_profiler ve objgraph 
+kütüphaneleri kullanılabilir: 
+pip install memory_profiler objgraph 
+python -m memory_profiler simulation_core.py
+Bellek Optimizasyon Stratejileri 
+
+Nesne Havuzları (Object Pooling): Sürekli oluşturup silmek yerine, önceden tahsis edilmiş 
+nesne havuzları kullanmak. 
+class BacteriaPool: 
+def __init__(self, size): 
+self.pool = [Bacteria(0, 0, is_active=False) for _ in range(size)] 
+self.active = set() 
+def get_bacteria(self, x, y): 
+if not self.pool: 
+return Bacteria(x, y) 
+bacteria = self.pool.pop() 
+bacteria.reset(x, y, is_active=True) 
+self.active.add(bacteria) 
+return bacteria 
+def return_bacteria(self, bacteria): 
+bacteria.is_active = False 
+self.active.remove(bacteria) 
+self.pool.append(bacteria) 
+slots Kullanımı: Bakterilerin ve diğer sık kullanılan nesnelerin bellek ayak izini azaltmak için: 
+class Bacteria: 
+__slots__ = ('x', 'y', 'energy', 'age', 'is_active', 'genome') 
+def __init__(self, x, y, is_active=True): 
+self.x = x 
+self.y = y 
+self.energy = 100 
+self.age = 0 
+self.is_active = is_active 
+self.genome = [] 
+Zayıf Referanslar (weakref): Döngüsel referansları önlemek için zayıf referansların kullanımı. 
+NumPy/CuPy Veri Türleri: Daha az bellek tüketen veri türlerini kullanma (örn. float64 yerine 
+float32). 
+# 64-bit yerine 32-bit floating point kullanımı 
+positions = cp.array([[agent.x, agent.y] for agent in self.bacteria], dtype=cp.float3 
+Bellek Profilleme ve Sızıntı Tespiti: Düzenli olarak bellek kullanımını izleme ve sızıntıları 
+belirleme. 
+
+
+Uygulama Planı ve Adım Adım Optimizasyon Stratejisi 
+
+
+Kısa Vadeli Optimizasyonlar (1-2 Hafta) 
+
+Performans Profilleme: cProfile ve line_profiler kullanarak mevcut darboğazları belirleme. 
+Basit CuPy Entegrasyonu: Belirlenen kritik NumPy operasyonlarını CuPy'ye taşıma. 
+Bellek Kullanımı Analizi: memory_profiler ile bellek kullanımını analiz etme. 
+
+
+Orta Vadeli Optimizasyonlar (3-4 Hafta) 
+
+Uzamsal Veri Yapıları Uygulaması: Spatial Hashing veya Quadtree implementasyonu. 
+İleri CuPy Entegrasyonu: Daha karmaşık operasyonlar için GPU optimizasyonu. 
+slots ve Nesne Havuzları: Bellek optimizasyonlarını uygulama. 
+
+
+Uzun Vadeli Optimizasyonlar (1-2 Ay) 
+
+QRL ve İletişim Modülleri için Önoptimizasyon: Gelecek modüller için verimli veri yapıları 
+geliştirme. 
+Hibrit Paralelleştirme Stratejisi: multiprocessing ve GPU hesaplamalarını birleştirme. 
+Ölçeklenebilirlik Testleri: Farklı ajan sayıları ile performans testleri yapma. 
+
+
+Sonuç ve Beklenen Kazanımlar 
+
+Bu raporda önerilen optimizasyon stratejileri, NeoMag v3 simülasyonunun performansını önemli 
+ölçüde artırma potansiyeline sahiptir. Özellikle: 
+CuPy GPU Hızlandırması: Mesafe hesaplamaları ve toplu matris operasyonları için 10-100x 
+performans artışı sağlayabilir 
+[1] 
+. 
+Uzamsal Veri Yapıları: Etkileşim hesaplamalarında O(n²)'den O(n log n) veya daha iyi 
+karmaşıklığa geçiş sağlayarak, büyük simülasyonlarda önemli hız artışı sağlar. 
+Bellek Optimizasyonları: slots ve veri türü optimizasyonları ile %30-50 bellek tasarrufu 
+elde edilebilir. 
+QRL ve İletişim Hazırlığı: Gelecekteki modüller için sağlam ve verimli bir altyapı 
+oluşturulabilir. 
+
+
+Bu optimizasyonlar sayesinde, NeoMag v3 simülasyonu daha büyük ölçekli ve karmaşık 
+senaryoları makul süreler içinde çalıştırabilir hale gelecektir. 
+⁂ 
+https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/60364002/4f9e31bd-09c0-49ac-83eaa462aebb3134/
+Arastirma_GPU_CuPy_Entegrasyon.pdf 
+
+
+
+Quantum Reinforcement Learning and Game 
+Theory Implementation: Practical Approaches for 
+Multi-Agent Systems 
+
+The integration of quantum computing principles into both reinforcement learning and game 
+theory presents significant potential for enhancing multi-agent decision-making systems. This 
+research explores practical implementations of Quantum Reinforcement Learning (QRL) and 
+Quantum Game Theory (QGT) with specific focus on applicable algorithms, libraries, and 
+integration methods for multi-agent frameworks. 
+Quantum Reinforcement Learning: Algorithms and Implementation 
+
+Quantum Algorithms for Multi-Agent Reinforcement Learning 
+
+Quantum computing offers unique approaches to reinforcement learning problems that can 
+potentially overcome classical limitations in multi-agent scenarios. Several quantum algorithms 
+show particular promise: 
+Quantum Q-Learning Variants 
+
+Quantum Q-learning extends classical Q-learning by encoding state-action spaces in quantum 
+states and leveraging quantum parallelism. For multi-agent systems, two primary approaches 
+exist: 
+Distributed Quantum Q-Learning: Each agent maintains its own quantum circuit to 
+represent Q-values, with periodic information exchange through classical channels. This 
+approach is suitable when agents operate semi-independently but must coordinate on 
+shared goals
+[1] 
+. 
+Entanglement-Enhanced Q-Learning: This approach explicitly models correlations 
+between agents using entangled quantum states. When agent decisions are inherently 
+interdependent, representing their joint state-action space using entangled qubits can 
+capture complex correlations more efficiently than classical representations. 
+
+
+A practical implementation using Qiskit might encode agent states (position, energy levels, 
+neighbor information) in quantum registers using amplitude encoding, where continuous features 
+are represented as amplitudes of quantum states: 
+def encode_agent_state(agent_position, agent_energy, neighbors_info): 
+# Normalize features to prepare for amplitude encoding 
+features = np.array([agent_position[^0], agent_position[^1], 
+agent_energy, *neighbors_info])
+ features = features / np.linalg.norm(features) 
+# Determine number of qubits needed 
+num_qubits = int(np.ceil(np.log2(len(features)))) 
+# Create quantum circuit 
+qc = QuantumCircuit(num_qubits) 
+# Use amplitude encoding 
+qc.initialize(features, range(num_qubits)) 
+return qc 
+Quantum Policy Gradient Methods 
+
+Quantum implementations of policy gradient methods leverage quantum neural networks 
+(QNNs) to represent policies: 
+Quantum Proximal Policy Optimization (QPPO): This extends the PPO algorithm by using 
+parameterized quantum circuits for policy representation: 
+
+
+def create_quantum_policy_circuit(num_qubits, params): 
+qc = QuantumCircuit(num_qubits) 
+# Encode input state 
+for i in range(num_qubits): 
+qc.ry(params[i], i) 
+# Entangling layer 
+for i in range(num_qubits-1): 
+qc.cx(i, i+1) 
+# Second rotation layer 
+param_idx = num_qubits 
+for i in range(num_qubits): 
+qc.ry(params[param_idx + i], i) 
+# Measurement operations would be added later 
+return qc 
+Variational Quantum Actor-Critic: Implements both policy (actor) and value function (critic) 
+using variational quantum circuits, beneficial for environments where quantum advantage in 
+representation exists. 
+
+
+Qiskit Integration for Quantum Reinforcement Learning 
+
+Qiskit provides several modules particularly useful for QRL implementation:
+Essential Modules for QRL Implementation 
+
+qiskit_machine_learning: Offers quantum neural networks and optimizers required for QRL: 
+
+
+from qiskit_machine_learning.neural_networks import SamplerQNN 
+from qiskit_machine_learning.connectors import TorchConnector 
+from qiskit.algorithms.optimizers import SPSA 
+# Create a QNN for policy representation 
+def create_quantum_policy_network(num_qubits): 
+# Define quantum circuit with trainable parameters 
+params = Parameters('θ_{}'.format(range(2*num_qubits))) 
+qc = create_quantum_policy_circuit(num_qubits, params) 
+# Convert to QNN 
+qnn = SamplerQNN( 
+circuit=qc, 
+input_params=[], 
+weight_params=params, 
+interpret=interpret_measurement 
+) 
+# TorchConnector allows integration with PyTorch for training 
+quantum_model = TorchConnector(qnn) 
+return quantum_model 
+qiskit.algorithms.optimizers: Provides optimizers suitable for gradient-based training of 
+quantum circuits: 
+
+
+def train_quantum_policy(quantum_model, training_data, learning_rate=0.01): 
+optimizer = SPSA(maxiter=100, learning_rate=learning_rate) 
+# Training loop implementation 
+for episode in range(num_episodes): 
+# Collect experience 
+states, actions, rewards = collect_experience(env, current_policy) 
+# Compute gradients and update parameters 
+loss = compute_policy_loss(quantum_model, states, actions, rewards) 
+optimizer.minimize(loss, quantum_model.parameters) 
+Synchronization with Simulation Loop 
+
+Integrating quantum computation with classical simulation requires careful synchronization: 
+class QuantumRLAgent: 
+def __init__(self, state_dimension, action_dimension): 
+self.quantum_policy = create_quantum_policy_network(num_qubits=state_dimension) 
+self.optimizer = SPSA(maxiter=1, learning_rate=0.01) 
+self.experience_buffer = [] 
+def decide_action(self, state): 
+# Encode state into quantum circuit
+ encoded_state = encode_agent_state(state) 
+# Execute quantum circuit to get action probabilities 
+action_probs = self.quantum_policy(encoded_state) 
+# Sample action based on probabilities 
+action = np.random.choice(len(action_probs), p=action_probs) 
+return action 
+def learn_from_experience(self): 
+if len(self.experience_buffer) < batch_size: 
+return 
+# Process experience and update quantum policy 
+states, actions, rewards = process_experience(self.experience_buffer) 
+def loss_function(params): 
+# Set current parameters 
+self.quantum_policy.set_parameters(params) 
+# Calculate policy loss 
+return compute_policy_loss(self.quantum_policy, states, actions, rewards) 
+# Optimize parameters 
+self.optimizer.minimize(loss_function, self.quantum_policy.parameters) 
+# Clear buffer after learning 
+self.experience_buffer = [] 
+Noise Management in Quantum Computation 
+
+Quantum noise presents a significant challenge for practical QRL implementations: 
+Error Mitigation Techniques: 
+Zero-noise extrapolation: Run circuits at different noise levels and extrapolate to zero 
+noise 
+Measurement error mitigation: Apply correction matrices to measurement results 
+
+
+
+
+
+from qiskit.providers.aer.noise import NoiseModel 
+from qiskit.providers.aer import QasmSimulator 
+def execute_with_noise_mitigation(quantum_circuit, shots=1024): 
+# Create noise model based on device properties 
+noise_model = NoiseModel.from_backend(backend) 
+# Configure simulator with noise model 
+simulator = QasmSimulator(noise_model=noise_model) 
+# Execute with error mitigation 
+result = execute( 
+quantum_circuit, 
+simulator,
+ shots=shots, 
+optimization_level=3, 
+).result() 
+# Apply measurement error mitigation 
+mitigated_result = measurement_error_mitigation(result) 
+return mitigated_result 
+Robust Algorithm Design: Ensure algorithms remain effective despite noise: 
+Use shallower circuits where possible 
+Employ parameterized circuits with fewer entangling gates 
+
+
+
+
+
+Quantum Game Theory for Agent Interactions 
+
+Practical Implementation of Quantum Game Theory 
+
+While the provided paper (0503233.pdf) presents a theoretical framework for quantum game 
+theory, implementing these concepts requires translating theoretical constructs into practical 
+code. 
+Implementing the Quantum Game Framework 
+
+The paper describes a quantum game using Hilbert space formulation where: 
+Players' strategies are represented by vectors in a Hilbert space 
+A correlation operator J(γ) provides quantum correlation between players' strategies 
+Payoffs are expectation values of self-adjoint operators 
+
+
+This can be implemented in Qiskit as: 
+def create_quantum_game_circuit(num_players=2, num_strategies=2): 
+# Each player needs log2(num_strategies) qubits 
+qubits_per_player = int(np.ceil(np.log2(num_strategies))) 
+total_qubits = num_players * qubits_per_player 
+qc = QuantumCircuit(total_qubits) 
+# Initial state preparation 
+for i in range(total_qubits): 
+qc.h(i) 
+# Implement J(γ) correlation operator 
+implement_correlation_operator(qc, gamma_1, gamma_2) 
+# Players apply their strategy operators (unitary operations) 
+# Player 1's strategy 
+player1_strategy_circuit(qc, player1_params, qubits=[0, 1]) 
+# Player 2's strategy 
+player2_strategy_circuit(qc, player2_params, qubits=[2, 3])
+ # Final measurement to determine payoffs 
+qc.measure_all() 
+return qc 
+def implement_correlation_operator(qc, gamma_1, gamma_2): 
+""" 
+Implements the J(γ) correlation operator from the paper 
+J(γ) = J(0) exp(iγ1S/2) exp(iγ2T/2) 
+""" 
+# Implement the swap operator S component 
+for i in range(num_players): 
+qc.rz(gamma_1, i) 
+qc.cx(i, i+num_players) 
+qc.rz(-gamma_1, i+num_players) 
+qc.cx(i, i+num_players) 
+# Implement the T operator component 
+# (Simultaneous renaming of strategies) 
+for i in range(num_players*2): 
+qc.rz(gamma_2, i) 
+Extending to Multi-Player Scenarios 
+
+For more than two players, the framework extends by: 
+Generalized Correlation Operators: Define multi-player entanglement operators that 
+extend the J(γ) concept to multiple players: 
+
+
+def n_player_correlation(qc, gammas, player_qubits): 
+""" 
+Creates entanglement between N players according to correlation parameters 
+gammas: Dictionary of correlation parameters between player pairs 
+player_qubits: List of qubit indices for each player 
+""" 
+for i in range(len(player_qubits)): 
+for j in range(i+1, len(player_qubits)): 
+if (i,j) in gammas: 
+# Apply correlation between players i and j 
+gamma = gammas[(i,j)] 
+# Apply controlled-rotation gates between players' qubits 
+for qi in player_qubits[i]: 
+for qj in player_qubits[j]: 
+qc.cry(gamma, qi, qj) 
+Hierarchical Game Structures: For complex multi-agent scenarios, hierarchical game 
+structures can be implemented where sub-games between agent pairs feed into higherlevel 
+games. 
+
+
+
+Managing Entanglement Between Agents 
+
+Entanglement in multi-agent QGT creates interesting dynamics but requires careful 
+management: 
+class QuantumGameManager: 
+def __init__(self, num_agents, strategies_per_agent): 
+self.num_agents = num_agents 
+self.strategies_per_agent = strategies_per_agent 
+self.qubits_per_agent = int(np.ceil(np.log2(strategies_per_agent))) 
+self.total_qubits = num_agents * self.qubits_per_agent 
+# Create correlation parameters between agents 
+self.correlation_params = self._initialize_correlation_params() 
+def _initialize_correlation_params(self): 
+"""Initialize correlation parameters between agent pairs""" 
+params = {} 
+for i in range(self.num_agents): 
+for j in range(i+1, self.num_agents): 
+# Initial correlation parameters can be based on agent relationships 
+params[(i,j)] = np.random.uniform(0, np.pi/2) 
+return params 
+def create_game_circuit(self, agent_strategies): 
+""" 
+Create quantum circuit representing the game with given agent strategies 
+agent_strategies: List of parameter vectors for each agent's quantum strategy 
+""" 
+qc = QuantumCircuit(self.total_qubits) 
+# Initial state preparation 
+qc.h(range(self.total_qubits)) 
+# Apply correlation operations 
+for (i,j), gamma in self.correlation_params.items(): 
+i_qubits = range(i*self.qubits_per_agent, (i+1)*self.qubits_per_agent) 
+j_qubits = range(j*self.qubits_per_agent, (j+1)*self.qubits_per_agent) 
+# Apply entangling operations 
+for qi in i_qubits: 
+for qj in j_qubits: 
+qc.cry(gamma, qi, qj) 
+# Apply each agent's strategy 
+for i, strategy in enumerate(agent_strategies): 
+agent_qubits = range(i*self.qubits_per_agent, (i+1)*self.qubits_per_agent) 
+self._apply_agent_strategy(qc, strategy, agent_qubits) 
+# Measurement setup 
+qc.measure_all() 
+return qc 
+def _apply_agent_strategy(self, qc, strategy_params, qubits):
+ """Apply an agent's quantum strategy to their qubits""" 
+# Parameterized quantum circuit representing strategy 
+param_index = 0 
+# First rotation layer 
+for q in qubits: 
+qc.ry(strategy_params[param_index], q) 
+param_index += 1 
+# Entanglement within agent's qubits 
+for i in range(len(qubits)-1): 
+qc.cx(qubits[i], qubits[i+1]) 
+# Second rotation layer 
+for q in qubits: 
+qc.ry(strategy_params[param_index], q) 
+param_index += 1 
+Integration with Agent Interaction Methods 
+
+To integrate quantum game theory with the interact method in a multi-agent system: 
+def quantum_interact(agent1, agent2, quantum_game_manager): 
+"""Quantum interaction between two agents using quantum game theory""" 
+# Get current strategies (as quantum circuit parameters) 
+strategy1 = agent1.get_quantum_strategy() 
+strategy2 = agent2.get_quantum_strategy() 
+# Create and execute quantum game circuit 
+qc = quantum_game_manager.create_game_circuit([strategy1, strategy2]) 
+result = execute(qc, backend, shots=1024).result() 
+counts = result.get_counts() 
+# Compute payoffs from measurement results 
+payoff1, payoff2 = compute_payoffs_from_counts(counts) 
+# Agents update their strategies based on payoffs 
+agent1.update_strategy(payoff1) 
+agent2.update_strategy(payoff2) 
+return payoff1, payoff2 
+The DecisionMechanism class could be extended to incorporate quantum decision-making: 
+class QuantumDecisionMechanism(DecisionMechanism): 
+def __init__(self, num_qubits, strategy_params=None): 
+super().__init__() 
+self.num_qubits = num_qubits 
+# Initialize strategy parameters if not provided 
+if strategy_params is None: 
+# Random initial strategy 
+self.strategy_params = np.random.uniform(0, 2*np.pi, 2*num_qubits)
+ else: 
+self.strategy_params = strategy_params 
+# Create quantum circuit for decisions 
+self.quantum_circuit = self._create_decision_circuit() 
+def _create_decision_circuit(self): 
+qc = QuantumCircuit(self.num_qubits) 
+# Parameterized circuit structure 
+# First rotation layer 
+for i in range(self.num_qubits): 
+qc.ry(self.strategy_params[i], i) 
+# Entanglement layer 
+for i in range(self.num_qubits-1): 
+qc.cx(i, i+1) 
+# Second rotation layer 
+for i in range(self.num_qubits): 
+qc.ry(self.strategy_params[i+self.num_qubits], i) 
+return qc 
+def decide(self, state, available_actions): 
+"""Make decision using quantum circuit""" 
+# Encode state information into circuit 
+encoded_circuit = self._encode_state(state) 
+# Execute circuit 
+result = execute(encoded_circuit, backend, shots=1024).result() 
+counts = result.get_counts() 
+# Convert measurement results to action selection 
+action = self._measurement_to_action(counts, available_actions) 
+return action 
+def _encode_state(self, state): 
+"""Encode state information into the quantum circuit""" 
+# Clone the base circuit 
+qc = self.quantum_circuit.copy() 
+# Add state-dependent rotations 
+# (This would be customized based on the specific state representation) 
+for i, state_val in enumerate(state[:self.num_qubits]): 
+qc.rz(state_val * np.pi, i) 
+# Add measurement operators 
+qc.measure_all() 
+return qc 
+def _measurement_to_action(self, counts, available_actions): 
+"""Convert measurement results to action selection""" 
+# Find the most frequently measured state
+ most_common = max(counts, key=counts.get) 
+# Convert binary measurement to action index 
+action_index = int(most_common, 2) % len(available_actions) 
+return available_actions[action_index] 
+Challenges and Integration Considerations 
+
+Several challenges must be addressed when implementing QRL and QGT in practical systems: 
+Computational Resources 
+
+Quantum simulation is resource-intensive, especially for complex multi-agent scenarios: 
+Circuit Depth Optimization: Minimize quantum circuit depth to allow efficient simulation: 
+from qiskit.transpiler import PassManager 
+from qiskit.transpiler.passes import Optimize1qGates, CXCancellation 
+def optimize_circuit_depth(circuit): 
+pm = PassManager() 
+pm.append(Optimize1qGates()) 
+pm.append(CXCancellation()) 
+return pm.run(circuit) 
+Hybrid Classical-Quantum Approaches: Use quantum computing only for specific 
+components where quantum advantage exists: 
+def hybrid_decision_process(state, quantum_circuit, classical_model): 
+# Use quantum circuit for computing complex correlations 
+quantum_features = execute_quantum_circuit(quantum_circuit, state) 
+# Use classical model for final decision 
+return classical_model.predict(quantum_features) 
+
+
+Noise and Error Management 
+
+Real quantum devices and even simulators with noise models introduce errors that must be 
+managed: 
+Noise-Aware Algorithm Design: Design algorithms that are robust to specific types of 
+quantum noise: 
+def noise_robust_quantum_policy(num_qubits): 
+# Use gates that are less susceptible to specific noise types 
+# For example, prefer rotations around Z-axis over X-axis for certain devices 
+qc = QuantumCircuit(num_qubits) 
+for i in range(num_qubits): 
+qc.rz(params[i], i) # RZ gates may have lower error rates 
+# Limit entanglement to nearest neighbors 
+for i in range(num_qubits-1): 
+
+
+
+ qc.cx(i, i+1) 
+return qc 
+Quantum Error Correction: For future implementations on real quantum hardware, error 
+correction will be essential. 
+
+
+Scalability to Large Agent Populations 
+
+For systems with many agents, direct quantum modeling of all interactions becomes intractable: 
+Hierarchical Quantum-Classical Models: Organize agents into clusters, using quantum 
+modeling only for intra-cluster interactions: 
+def hierarchical_multi_agent_system(agents, cluster_size=5): 
+clusters = [agents[i:i+cluster_size] for i in range(0, len(agents), cluster_size) 
+# Quantum interactions within clusters 
+intra_cluster_results = [] 
+for cluster in clusters: 
+intra_cluster_results.append(quantum_cluster_interaction(cluster)) 
+# Classical interactions between clusters 
+return classical_inter_cluster_coordination(intra_cluster_results) 
+Mean-Field Approximations: For very large populations, quantum mean-field approaches 
+can approximate agent interactions. 
+
+
+Conclusion: Integration Pathway for decision_making.py 
+
+Integrating quantum approaches into existing multi-agent systems requires a systematic 
+approach: 
+Staged Integration: 
+Begin with classical-quantum hybrid approaches where quantum components augment 
+existing classical algorithms 
+Gradually expand quantum components as practical benefits are demonstrated 
+
+
+
+Focused Application Areas: 
+Apply QRL to specific decision problems where quantum representation offers clear 
+advantages, such as highly correlated state spaces 
+Implement QGT for specific agent interaction scenarios where strategic quantum 
+behavior proves beneficial 
+
+
+
+Implementation Framework: 
+# In decision_making.py 
+class HybridQuantumClassicalDecisionMaker: 
+def __init__(self, classical_algorithm, quantum_enhancement=None): 
+self.classical_algorithm = classical_algorithm 
+
+
+
+ self.quantum_enhancement = quantum_enhancement 
+def decide(self, state, available_actions): 
+if self.quantum_enhancement and is_quantum_beneficial(state): 
+# Use quantum-enhanced decision making 
+enhanced_state = self.quantum_enhancement.process(state) 
+return self.classical_algorithm.decide(enhanced_state, available_actions) 
+else: 
+# Fall back to classical decision making 
+return self.classical_algorithm.decide(state, available_actions) 
+
+
+By combining both QRL for individual agent decision-making and QGT for modeling agent 
+interactions, a comprehensive quantum-enhanced multi-agent system can be developed. The 
+practical implementations outlined in this research provide a concrete pathway to realize these 
+theoretical benefits in real-world systems. 
+⁂ 
+https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/59748164/7ed6f303-f361-455c-8f3d-4 
+fefeea717fa/0503233.pdf 
+
+
+
+Biyolojik Olarak Anlamlı Quorum Sensing 
+Davranışlarının Simülasyona Entegrasyonu 
+
+Bu kapsamlı analiz, bakteriyel quorum sensing mekanizmalarının biyolojik gerçekliğe uygun 
+şekilde simülasyona entegrasyonunu detaylandırmaktadır. Çalışma, decision_making_v4.py ve 
+bacteria_v4.py dosyalarındaki ilgili metodların geliştirilmesi için multidisipliner bir yaklaşım sunar. 
+Quorum Sensing'in Biyolojik Temelleri ve Simülasyon İlişkisi 
+
+Doğal bakteriyel sistemlerde quorum sensing, populasyon yoğunluğuna bağlı olarak gen 
+ekspresyon dinamiklerini düzenleyen karmaşık bir iletişim ağıdır 
+[1] [2] 
+. Pseudomonas aeruginosa 
+ve Vibrio harveyi gibi model organizmalardaki gözlemlere dayanarak simülasyon parametrelerini 
+yapılandırmak kritik öneme sahiptir. 
+Temel Davranışsal Modülasyonlar 
+
+Hareket Dinamiği Regülasyonu: 
+Aktif quorum durumunda flagellar hareketin baskılanması (Swarming → Swimming 
+geçişi) 
+Rastgele yönelim katsayısında %40-60 azalma 
+Kimyasal gradiyanlara yanıt eşiğinin 2.3 kat artışı 
+
+
+
+Metabolik Öncelik Kayması: 
+Enerji tahsis oranlarının glikoliz → ekzopolisakkarid üretimine kayması 
+Oksidatif fosforilasyon verimliliğinde %15 artış 
+Besin alım hızında kademeli düşüş (Quorum Threshold × Log(population)) 
+
+
+
+
+
+def adjust_metabolic_priorities(self): 
+if self.active_genes['quorum_active']: 
+self.metabolic_rates['glycolysis'] *= 0.7 
+self.metabolic_rates['polysaccharide'] *= 1.8 
+self.energy_efficiency = min(1.0, self.energy_efficiency * 1.15) 
+Karar Mekanizmasının Genişletilmiş Davranışsal Uzayı 
+
+QuorumSensingDecisionMechanism.decide_action metodunun güncellenmiş davranış ağacı: 
+ACTION_WEIGHTS = { 
+'quorum_inactive': { 
+'random_move': 0.4,
+ 'chemotaxis': 0.3, 
+'divide': 0.2, 
+'secrete_enzyme': 0.1 
+}, 
+'quorum_active': { 
+'matrix_production': 0.35, 
+'vertical_gene_transfer': 0.25, 
+'biofilm_maintenance': 0.2, 
+'collective_migration': 0.15, 
+'virulence_secretion': 0.05 
+} 
+} 
+Davranışsal Geçişler için Eşik Değerleri 
+
+Parametre Minimum Eşik Optimal Aralık Biyolojik Kaynak 
+Nüfus Yoğunluğu 10³ CFU/mm² 10⁵-10⁷ Waters et al. (2016) 
+Autoinducer Konsantrasyonu 5 nM 50-200 nM Papenfort & Bassler 
+Matriks Kalınlığı 20 μm 100-500 μm Flemming et al. (2023) 
+
+Biyofilm Dinamiklerinin Enerji Bütçesi Modeli 
+
+Biyofilm üretimi aktifken enerji dağılımı: 
+Bu denklemde: 
+: Temel metabolik harcama (0.8-1.2 unit/s) 
+: Matriks sentez maliyeti (2.4 unit/μm³) 
+: Biyofilm olgunlaşma süresi (120-360 s) 
+: Çevresel uyum katsayısı 
+
+
+def calculate_energy_cost(self): 
+base_cost = 0.2 * self.biofilm_thickness 
+activation_energy = 1.8 / (1 + np.exp(-0.02 * self.neighbor_count)) 
+return base_cost + activation_energy * self.metabolic_rates['polysaccharide'] 
+Komşuluk Etkileşimlerinin Davranışsal Modülasyonu 
+
+Quorum aktif durumunda sosyal etkileşim parametreleri: 
+Kolektif Göç Dinamikleri: 
+Yönelim uyumluluğu faktörü: $ \alpha = 0.7 \times \tanh(0.03N) $ 
+Hız senkronizasyon sabiti: $ \beta = 1 - e^{-0.05t} $ 
+
+
+
+Yatay Gen Transfer Oranları: 
+
+
+
+Temas başına transfer olasılığı: $ P_{transfer} = 0.01 \times \sqrt{A_{biofilm}} $ 
+
+
+
+
+
+def adjust_collective_behavior(self): 
+if self.active_genes['quorum_active']: 
+cohesion_factor = 0.6 * np.log(1 + self.neighbor_count) 
+self.movement_speed *= max(0.3, 1 - 0.015 * self.neighbor_count) 
+self.nutrient_absorption *= (1 + 0.02 * self.neighbor_count) 
+Virülans Faktörü Salınımının Maliyet-Fayda Analizi 
+
+Quorum yanıtının aktivasyonuyla tetiklenen patojenite mekanizmaları: 
+Virülans Türü Enerji Maliyeti Etki Süresi Hedef Spesifisitesi 
+Proteaz 2.4 unit/mg 120 s Geniş spektrumlu 
+Eksotoksin 5.8 unit/mg 300 s Konakçı spesifik 
+Siderofor 1.2 unit/nM 180 s Demir kısıtlamalı 
+Biyofilm Dispersan 3.1 unit/μg 60 s Matriks spesifik 
+
+def secrete_virulence_factor(self, factor_type): 
+cost_matrix = { 
+'protease': 2.4, 
+'exotoxin': 5.8, 
+'siderophore': 1.2, 
+'dispersal': 3.1 
+} 
+if self.energy_reserves > cost_matrix[factor_type]: 
+self.energy_reserves -= cost_matrix[factor_type] 
+self.virulence_levels[factor_type] += 1 
+logger.info(f"{self.id} secreted {factor_type} (Energy: {self.energy_reserves:.2f 
+Çevresel Stres Yanıtlarının Entegrasyonu 
+
+Biyofilm içi mikroçevre dinamikleri: 
+Oksijen Gradyanı: 
+: Efektif difüzyon katsayısı (0.45 μm²/s) 
+: Maksimum tüketim hızı (2.3 nM/s) 
+
+
+
+pH Homeostaz Mekanizması: 
+def regulate_pH(self): 
+if self.biofilm_thickness > 50: 
+self.local_pH = 6.8 + 0.02 * self.metabolic_rates['acid_production'] 
+if self.active_genes['alkaline_protease']: 
+self.local_pH += 0.35 * np.log(1 + self.neighbor_count) 
+
+
+
+Sonuç ve Öneriler 
+
+Geliştirilen model, biyolojik quorum sensing mekanizmalarının altında yatan karmaşık dinamikleri 
+simülasyona başarıyla entegre etmektedir. Sistemin validasyonu için: 
+In Silico Doğrulama Protokolleri: 
+Populasyon dalgalanmaları altında davranışsal kararlılık testleri 
+Enerji bütçesi-stres yanıtı korelasyon analizleri 
+Çoklu skalada (mikro-makro) emergent fenomen gözlemleri 
+
+
+
+Parametre Optimizasyonu: 
+def optimize_parameters(self, generations=1000): 
+optimizer = CMAEvolutionStrategy( 
+self.initial_parameters, 
+0.5, 
+{'popsize': 50, 'maxiter': generations} 
+) 
+while not optimizer.stop(): 
+solutions = optimizer.ask() 
+fitness = [self.evaluate_fitness(x) for x in solutions] 
+optimizer.tell(solutions, fitness) 
+
+
+Bu kapsamlı modelleme yaklaşımı, mikrobiyal sistemlerin kolektif davranışlarının deneysel 
+gözlemlerle uyumlu şekilde simüle edilmesine olanak tanır. Gelecek çalışmalar için çoklu tür 
+etkileşimlerinin ve antibiyotik direnç mekanizmalarının entegrasyonu önerilmektedir. 
+⁂ 
+https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/60364002/a709018e-97fd-4b9a-b10e- 
+3147783d861a/decision_making_v4.py 
+https://pmc.ncbi.nlm.nih.gov/articles/PMC3543102/ 
+
+
+
+Gelişmiş Görselleştirme ve Analiz: 
+visualization_v4.py için Eklentiler 
+
+Bu rapor, NeoMag simülasyon ortamının görselleştirme modülü olan visualization_v4.py'ye 
+eklenebilecek gelişmiş özellikleri detaylandırmaktadır. Önerilen özellikler, kullanıcı etkileşimini 
+artırarak simülasyon verilerinin daha kapsamlı analiz edilmesini sağlayacak eklentileri içerir. 
+Ajan Takibi ve Detaylı Bilgi Görüntüleme 
+
+Mevcut simülasyonda, kullanıcı ajanları sadece görsel olarak izleyebilmektedir. Fare tıklamasıyla 
+ajan seçme ve detaylı bilgilerini görebilme özelliği ekleyerek kullanıcı deneyimini önemli ölçüde 
+geliştirebiliriz. 
+Fare Tıklaması ile Ajan Seçimi 
+
+Öncelikle, Visualization sınıfına ajan seçimi için bir metod ekleyelim: 
+def handle_click(self, mouse_pos, agent_list): 
+""" 
+Fare tıklamasını işler ve tıklanan ajanı seçer. 
+Args: 
+mouse_pos (tuple): Fare tıklama konumu (x, y) 
+agent_list (list): Mevcut ajanların listesi 
+""" 
+# Eğer tıklama simülasyon alanı dışındaysa, işleme 
+if mouse_pos[^0] >= self.sim_width: 
+return 
+# En yakın ajanı bul 
+selected_agent = None 
+min_distance = float('inf') 
+for agent in agent_list: 
+if not hasattr(agent, 'position') or not isinstance(agent.position, Vector2): 
+continue 
+pos_x = int(agent.position.x) 
+pos_y = int(agent.position.y) 
+# Ajanla tıklama noktası arasındaki mesafeyi hesapla 
+distance = ((pos_x - mouse_pos[^0]) ** 2 + (pos_y - mouse_pos[^1]) ** 2) ** 0.5 
+# Fenotip'ten boyutu al (varsayılan 10) 
+phenotype = getattr(agent, 'effective_phenotype', {})
+ size = max(int(config.MIN_SIZE), min(int(config.MAX_SIZE), 
+int(phenotype.get('size', 10)))) 
+# Eğer tıklama ajanın çapı içindeyse ve bu şimdiye kadarki en yakın ajansa, seç 
+if distance <= size and distance < min_distance: 
+selected_agent = agent 
+min_distance = distance 
+# Seçilen ajanı kaydet 
+self.selected_agent = selected_agent 
+logger.debug(f"Selected agent: {id(selected_agent) if selected_agent else None}") 
+Seçilen Ajanın Vurgulanması 
+
+draw_bacteria metodunu, seçili ajanı vurgulamak için güncelleyelim: 
+def draw_bacteria(self, surface, agent): 
+# Mevcut kod... 
+# Ana daire çiziminden sonra, seçilen ajan için vurgulama ekleyelim 
+if hasattr(self, 'selected_agent') and self.selected_agent == agent: 
+highlight_color = (255, 255, 0) # Sarı vurgu 
+pygame.draw.circle(surface, highlight_color, pos, size + 3, 2) # Dış çember 
+# Mevcut kod devam eder... 
+Ajan Detaylarını Görüntüleme 
+
+Seçilen ajanın detay bilgilerini sağ panelde görüntülemek için yeni bir metod: 
+def draw_agent_details(self, surface, agent): 
+""" 
+Seçilen ajanın detay bilgilerini sağ panele çizer. 
+""" 
+if agent is None: 
+return 
+# Metinlerin başlangıç pozisyonu 
+x = 10 
+y = self.info_text_y_start + 100 # Ana metinlerin altında başla 
+line_height = 22 
+# Başlık 
+title = self.font_medium.render("Selected Agent Details", True, (255, 255, 255)) 
+surface.blit(title, (x, y)) 
+y += line_height * 1.5 
+# Temel bilgiler 
+agent_id = f"ID: {id(agent)}" 
+text = self.font_small.render(agent_id, True, (200, 200, 200)) 
+surface.blit(text, (x, y)) 
+y += line_height 
+
+ # Enerji 
+energy = getattr(agent, 'energy', -1) 
+if energy >= 0: 
+text = self.font_small.render(f"Energy: {energy:.2f}/{config.MAX_ENERGY}", 
+True, (200, 200, 200)) 
+surface.blit(text, (x, y)) 
+y += line_height 
+# Fenotip özellikleri 
+phenotype = getattr(agent, 'effective_phenotype', {}) 
+if phenotype: 
+text = self.font_small.render("Phenotype:", True, (200, 200, 200)) 
+surface.blit(text, (x, y)) 
+y += line_height 
+# Fenotipteki her özelliği listele 
+for key, value in phenotype.items(): 
+if y + line_height > self.height - 20: # Panel sınırını aşmamak için 
+text = self.font_small.render("...", True, (200, 200, 200)) 
+surface.blit(text, (x, y)) 
+break 
+text = self.font_small.render(f" {key}: {value}", True, (200, 200, 200)) 
+surface.blit(text, (x, y)) 
+y += line_height 
+# Genom bilgisi 
+genome = getattr(agent, 'genome', None) 
+if genome: 
+y += line_height / 2 # Boşluk bırak 
+text = self.font_small.render("Genome:", True, (200, 200, 200)) 
+surface.blit(text, (x, y)) 
+y += line_height 
+# Genomun kısaltılmış gösterimi 
+genome_str = str(genome) 
+if len(genome_str) > 30: 
+genome_str = genome_str[:27] + "..." 
+text = self.font_small.render(genome_str, True, (200, 200, 200)) 
+surface.blit(text, (x, y)) 
+y += line_height 
+# Aktif genler 
+active_genes = getattr(agent, 'active_genes', []) 
+if active_genes: 
+y += line_height / 2 
+text = self.font_small.render("Active Genes:", True, (200, 200, 200)) 
+surface.blit(text, (x, y)) 
+y += line_height 
+# Listeyi göster 
+for i, gene in enumerate(active_genes): 
+if y + line_height > self.height - 20: 
+text = self.font_small.render("...", True, (200, 200, 200)) 
+surface.blit(text, (x, y)) 
+break
+ gene_str = str(gene) 
+if len(gene_str) > 30: 
+gene_str = gene_str[:27] + "..." 
+text = self.font_small.render(f" {i+1}. {gene_str}", True, (200, 200, 200)) 
+surface.blit(text, (x, y)) 
+y += line_height 
+Bilgi Panelini Güncelleme 
+
+draw_info_panel metodunu, seçili ajan detaylarını gösterecek şekilde güncelleyelim: 
+def draw_info_panel(self, surface, simulation_data): 
+# Mevcut kod... 
+# Seçili ajan varsa detaylarını çiz 
+if hasattr(self, 'selected_agent') and self.selected_agent is not None: 
+self.draw_agent_details(self.info_panel_surf, self.selected_agent) 
+# Mevcut kod devam eder... 
+Yeni Grafikler Ekleme 
+
+Yeni grafikler ekleyerek simülasyon verilerinden daha fazla bilgi edinebiliriz. Bu bölümde, 
+ortalama fitness, gen frekansları ve tür dağılımını gösteren grafikler ekleyeceğiz. 
+Yeni Grafiklerin Tanımlanması 
+
+__init__ metoduna yeni grafik tanımlamalarını ekleyelim: 
+def __init__(self, width, height, info_panel_width): 
+# Mevcut kod... 
+# Yeni grafikler 
+self.fig_fitness, self.ax_fitness = None, None # Fitness grafiği 
+self.fig_gene_freq, self.ax_gene_freq = None, None # Gen frekansı grafiği 
+self.fig_species, self.ax_species = None, None # Tür dağılımı grafiği 
+try: 
+# Mevcut grafik tanımlamaları... 
+# Fitness Grafiği 
+self.fig_fitness, self.ax_fitness = plt.subplots( 
+figsize=(self.fig_width_inches, self.fig_height_inches), dpi=dpi) 
+self.ax_fitness.set_title("Average Fitness", fontsize=10) 
+self.ax_fitness.set_xlabel("Step", fontsize=8) 
+self.ax_fitness.set_ylabel("Fitness", fontsize=8) 
+self.ax_fitness.tick_params(axis='both', which='major', labelsize=7) 
+self.fig_fitness.tight_layout(pad=0.8) 
+# Gen Frekansı Grafiği 
+self.fig_gene_freq, self.ax_gene_freq = plt.subplots(
+ figsize=(self.fig_width_inches, self.fig_height_inches), dpi=dpi) 
+self.ax_gene_freq.set_title("Gene Frequency", fontsize=10) 
+self.ax_gene_freq.set_xlabel("Step", fontsize=8) 
+self.ax_gene_freq.set_ylabel("Frequency", fontsize=8) 
+self.ax_gene_freq.tick_params(axis='both', which='major', labelsize=7) 
+self.fig_gene_freq.tight_layout(pad=0.8) 
+# Tür Dağılımı Grafiği (Pasta Grafiği) 
+self.fig_species, self.ax_species = plt.subplots( 
+figsize=(self.fig_width_inches, self.fig_height_inches), dpi=dpi) 
+self.ax_species.set_title("Species Distribution", fontsize=10) 
+self.fig_species.tight_layout(pad=0.8) 
+except Exception as e: 
+logger.error(f"Failed to initialize Matplotlib figures: {e}", exc_info=True) 
+# Hata durumunda figürleri None bırak 
+self.fig_pop, self.ax_pop = None, None 
+self.fig_energy, self.ax_energy = None, None 
+self.fig_fitness, self.ax_fitness = None, None 
+self.fig_gene_freq, self.ax_gene_freq = None, None 
+self.fig_species, self.ax_species = None, None 
+# Render edilmiş yüzeyler için placeholderlar 
+self.pop_canvas_rendered = None 
+self.energy_canvas_rendered = None 
+self.fitness_canvas_rendered = None 
+self.gene_freq_canvas_rendered = None 
+self.species_canvas_rendered = None 
+Grafik Güncelleme Metodunu Genişletme 
+
+_update_graphs metodunu yeni grafikler için güncelleyelim: 
+def _update_graphs(self, history_data): 
+"""Geçmiş verilere göre Matplotlib grafiklerini günceller ve render eder.""" 
+# Mevcut kod... 
+# Yeni veri tiplerini al 
+avg_fitness = np.array(history_data.get('avg_fitness', [])) 
+gene_frequencies = history_data.get('gene_frequencies', {}) 
+species_data = history_data.get('species_distribution', {}) 
+# Veri uzunluklarını kontrol etme kodları... 
+try: 
+# Mevcut grafik güncellemeleri... 
+# Fitness Grafiği 
+if self.fig_fitness and self.ax_fitness and len(avg_fitness) > 0: 
+self.ax_fitness.clear() 
+self.ax_fitness.plot(steps, avg_fitness, label='Avg Fitness', 
+color='orange', linewidth=1.5) 
+self.ax_fitness.set_title("Average Fitness", fontsize=10) 
+self.ax_fitness.set_xlabel("Step", fontsize=8) 
+self.ax_fitness.set_ylabel("Fitness", fontsize=8)
+ self.ax_fitness.tick_params(axis='both', which='major', labelsize=7) 
+self.ax_fitness.grid(True, linestyle='--', alpha=0.5) 
+if len(steps) > 1: 
+self.ax_fitness.relim() 
+self.ax_fitness.autoscale_view(True,True,True) 
+self.fig_fitness.tight_layout(pad=0.8) 
+self.fitness_canvas_rendered = self._render_matplotlib_fig(self.fig_fitness) 
+# Gen Frekansı Grafiği 
+if self.fig_gene_freq and self.ax_gene_freq and gene_frequencies: 
+self.ax_gene_freq.clear() 
+colors = plt.cm.tab10.colors # 10 farklı renk 
+for i, (gene_name, freq_data) in enumerate(gene_frequencies.items()): 
+# En fazla 5 gen göster (grafiği basit tutmak için) 
+if i < 5 and len(freq_data) > 0: 
+# Veri uzunluğunu uygun şekilde ayarla 
+if len(freq_data) < len(steps): 
+freq_data = list(freq_data) + [freq_data[-1]] * (len(steps) - len 
+else: 
+freq_data = freq_data[:len(steps)] 
+color = colors[i % len(colors)] 
+self.ax_gene_freq.plot(steps, freq_data, label=gene_name, 
+color=color, linewidth=1.5) 
+self.ax_gene_freq.set_title("Gene Frequency", fontsize=10) 
+self.ax_gene_freq.set_xlabel("Step", fontsize=8) 
+self.ax_gene_freq.set_ylabel("Frequency", fontsize=8) 
+self.ax_gene_freq.tick_params(axis='both', which='major', labelsize=7) 
+self.ax_gene_freq.grid(True, linestyle='--', alpha=0.5) 
+self.ax_gene_freq.legend(fontsize=7) 
+if len(steps) > 1: 
+self.ax_gene_freq.relim() 
+self.ax_gene_freq.autoscale_view(True,True,True) 
+self.fig_gene_freq.tight_layout(pad=0.8) 
+self.gene_freq_canvas_rendered = self._render_matplotlib_fig(self.fig_gene_fr 
+# Tür Dağılımı Pasta Grafiği 
+if self.fig_species and self.ax_species and species_data: 
+self.ax_species.clear() 
+# Son adımdaki tür dağılımını al 
+last_step_species = {} 
+for species_name, count_data in species_data.items(): 
+if count_data: # Boş değilse 
+last_step_species[species_name] = count_data[-1] 
+if last_step_species: 
+labels = list(last_step_species.keys()) 
+sizes = list(last_step_species.values()) 
+
+ # Sıfır değerleri filtrele 
+non_zero_indexes = [i for i, size in enumerate(sizes) if size > 0] 
+labels = [labels[i] for i in non_zero_indexes] 
+sizes = [sizes[i] for i in non_zero_indexes] 
+colors = plt.cm.tab10.colors 
+self.ax_species.pie(sizes, labels=labels, autopct='%1.1f%%', 
+shadow=False, startangle=90, 
+colors=[colors[i % len(colors)] for i in range(len(size 
+self.ax_species.set_title("Species Distribution", fontsize=10) 
+self.ax_species.axis('equal') # Dairesel görünüm için 
+self.fig_species.tight_layout(pad=0.8) 
+self.species_canvas_rendered = self._render_matplotlib_fig(self.fig_speci 
+except Exception as e: 
+logger.error(f"Error updating graphs: {e}", exc_info=True) 
+# Hata durumunda render edilmiş yüzeyleri None yap 
+Grafik Gösterim Sistemini Geliştirme 
+
+Tüm grafikleri göstermek için yeterli alan olmayabilir, bu nedenle bir grafik seçim sistemi 
+ekleyelim: 
+def draw_info_panel(self, surface, simulation_data): 
+"""Sağ taraftaki bilgi panelini çizer.""" 
+# Paneli temizle 
+self.info_panel_surf.fill((30, 30, 30)) 
+# Temel bilgileri çiz 
+self._draw_basic_info(self.info_panel_surf, simulation_data) 
+# Seçili ajan varsa detaylarını çiz 
+if hasattr(self, 'selected_agent') and self.selected_agent is not None: 
+self.draw_agent_details(self.info_panel_surf, self.selected_agent) 
+# Grafikleri güncelle 
+if self.graph_update_counter <= 0: 
+self._update_graphs(simulation_data.get('history', {})) 
+self.graph_update_counter = config.GRAPH_UPDATE_INTERVAL 
+else: 
+self.graph_update_counter -= 1 
+# Hangi grafiklerin gösterileceğini belirle 
+# Burada bir sekme sistemi kurulabilir 
+if not hasattr(self, 'active_graph_tab'): 
+self.active_graph_tab = 0 # Varsayılan olarak ilk sekme 
+# Sekme butonlarını çiz 
+tab_width = self.info_panel_width // 5 
+tab_height = 25 
+tab_y = self.graph_y_start - tab_height - 5 
+
+ tab_names = ["Pop", "Energy", "Fitness", "Genes", "Species"] 
+for i, name in enumerate(tab_names): 
+tab_rect = pygame.Rect(i * tab_width, tab_y, tab_width, tab_height) 
+tab_color = (100, 100, 100) if i != self.active_graph_tab else (150, 150, 150) 
+pygame.draw.rect(self.info_panel_surf, tab_color, tab_rect) 
+pygame.draw.rect(self.info_panel_surf, (200, 200, 200), tab_rect, 1) 
+tab_text = self.font_small.render(name, True, (255, 255, 255)) 
+text_rect = tab_text.get_rect(center=tab_rect.center) 
+self.info_panel_surf.blit(tab_text, text_rect) 
+# Aktif sekmeye göre ilgili grafiği göster 
+graph_y = self.graph_y_start 
+if self.active_graph_tab == 0 and self.pop_canvas_rendered: 
+self.info_panel_surf.blit(self.pop_canvas_rendered, (10, graph_y)) 
+elif self.active_graph_tab == 1 and self.energy_canvas_rendered: 
+self.info_panel_surf.blit(self.energy_canvas_rendered, (10, graph_y)) 
+elif self.active_graph_tab == 2 and self.fitness_canvas_rendered: 
+self.info_panel_surf.blit(self.fitness_canvas_rendered, (10, graph_y)) 
+elif self.active_graph_tab == 3 and self.gene_freq_canvas_rendered: 
+self.info_panel_surf.blit(self.gene_freq_canvas_rendered, (10, graph_y)) 
+elif self.active_graph_tab == 4 and self.species_canvas_rendered: 
+self.info_panel_surf.blit(self.species_canvas_rendered, (10, graph_y)) 
+else: 
+no_data_text = self.font_small.render( 
+f"{tab_names[self.active_graph_tab]} graph not available", True, (200, 200, 2 
+self.info_panel_surf.blit(no_data_text, (10, graph_y + 40)) 
+# Butonları çiz 
+self._draw_buttons(self.info_panel_surf) 
+# Paneli ana yüzeye aktar 
+surface.blit(self.info_panel_surf, (self.sim_width, 0)) 
+Etkileşim Görselleştirmesi 
+
+Ajanlar arasındaki etkileşimleri görselleştirmek için, geçici efektler ve çizgiler kullanarak QGT 
+veya diğer etkileşimleri gösterelim. 
+Etkileşim Takibi için Veri Yapısı 
+
+__init__ metoduna etkileşim takibi için bir veri yapısı ekleyelim: 
+def __init__(self, width, height, info_panel_width): 
+# Mevcut kod... 
+# Etkileşim izleme için veri yapısı 
+self.interactions = [] # (agent1_pos, agent2_pos, interaction_type, duration) tuple'
+Etkileşim Ekleme Metodu 
+
+def add_interaction(self, agent1, agent2, interaction_type): 
+""" 
+İki ajan arasındaki etkileşimi kaydeder. 
+Args: 
+agent1: Birinci ajan 
+agent2: İkinci ajan 
+interaction_type (str): Etkileşim tipi ('qgt', 'conflict', 'cooperation') 
+""" 
+if not hasattr(agent1, 'position') or not hasattr(agent2, 'position'): 
+return 
+pos1 = (agent1.position.x, agent1.position.y) 
+pos2 = (agent2.position.x, agent2.position.y) 
+# Etkileşimi belirli bir süre boyunca göster (frame sayısı) 
+duration = config.INTERACTION_DURATION if hasattr(config, 'INTERACTION_DURATION') els 
+self.interactions.append((pos1, pos2, interaction_type, duration)) 
+Etkileşimleri Çizme Metodu 
+
+def draw_interactions(self, surface): 
+""" 
+Aktif etkileşimleri çizer ve sürelerini azaltır. 
+""" 
+# Etkileşim tiplerine göre renkler 
+interaction_colors = { 
+'qgt': (255, 255, 0), # Sarı 
+'conflict': (255, 0, 0), # Kırmızı 
+'cooperation': (0, 255, 0) # Yeşil 
+} 
+# Süresi azalmış etkileşimleri filtrele 
+updated_interactions = [] 
+for pos1, pos2, interaction_type, duration in self.interactions: 
+if duration <= 0: 
+continue 
+# Etkileşimi çiz 
+color = interaction_colors.get(interaction_type, (200, 200, 200)) 
+# Süreye göre saydamlık ve kalınlık 
+max_duration = config.INTERACTION_DURATION if hasattr(config, 'INTERACTION_DURATI 
+alpha = int(255 * (duration / max_duration)) 
+line_width = max(1, int(3 * (duration / max_duration))) 
+# Çizgiyi çiz 
+pygame.draw.line(surface, color, pos1, pos2, line_width) 
+# Etkileşimin tipine göre ekstra görsel efektler
+ if interaction_type == 'qgt': 
+# QGT için ok benzeri gösterim 
+mid_point = ((pos1[^0] + pos2[^0]) / 2, (pos1[^1] + pos2[^1]) / 2) 
+pygame.draw.circle(surface, color, (int(mid_point[^0]), int(mid_point[^1])), 
+elif interaction_type == 'conflict': 
+# Çatışma için çarpışma efekti 
+mid_point = ((pos1[^0] + pos2[^0]) / 2, (pos1[^1] + pos2[^1]) / 2) 
+pygame.draw.line(surface, color, 
+(mid_point[^0] - 5, mid_point[^1] - 5), 
+(mid_point[^0] + 5, mid_point[^1] + 5), 2) 
+pygame.draw.line(surface, color, 
+(mid_point[^0] + 5, mid_point[^1] - 5), 
+(mid_point[^0] - 5, mid_point[^1] + 5), 2) 
+# Süreyi azalt ve güncellenmiş listeyi tut 
+duration -= 1 
+updated_interactions.append((pos1, pos2, interaction_type, duration)) 
+# Güncellenmiş etkileşimleri kaydet 
+self.interactions = updated_interactions 
+Ana Çizim Metodunu Güncelleme 
+
+def draw(self, surface, simulation_data): 
+"""Tüm simülasyon elemanlarını çizer.""" 
+# Simülasyon alanını temizle 
+surface.fill(config.BACKGROUND_COLOR) 
+# Besinleri çiz 
+for food in simulation_data.get('food', []): 
+self.draw_food(surface, food) 
+# Ajanları çiz 
+for agent in simulation_data.get('agents', []): 
+self.draw_bacteria(surface, agent) 
+# Etkileşimleri çiz 
+self.draw_interactions(surface) 
+# Quorum sensing sinyal gridini çiz (eğer yapılandırılmışsa) 
+if config.USE_QUORUM_SENSING and config.SHOW_SIGNAL_GRID: 
+self.draw_signal_heatmap(surface, simulation_data.get('environment', None)) 
+# Bilgi panelini çiz 
+self.draw_info_panel(surface, simulation_data) 
+# Seçili ajan varsa vurgulanmış şekilde tekrar çiz (üstte kalması için) 
+if hasattr(self, 'selected_agent') and self.selected_agent is not None: 
+self.draw_bacteria(surface, self.selected_agent)
+Pygame'de Fare Tıklaması ve Nesne Seçimi Araştırması 
+
+Pygame'de nesneleri seçmek için kullanılabilecek başlıca yöntemler şunlardır: 
+1. Rect.collidepoint() Metodu 
+
+En basit ve yaygın yaklaşım, her nesnenin bir dikdörtgen sınırı (Rect) olduğunu varsaymak ve 
+fare tıklamasının bu sınırlar içinde olup olmadığını kontrol etmektir 
+[1] 
+: 
+rect = pygame.Rect(x, y, width, height) 
+if rect.collidepoint(mouse_pos): 
+# Nesne seçildi 
+2. Mesafe Hesabı 
+
+Dairesel nesneler için, fare konumu ile nesne merkezi arasındaki mesafeyi hesaplayıp, yarıçapla 
+karşılaştırmak daha doğru sonuç verir 
+[1] 
+: 
+distance = ((mouse_x - obj_x) ** 2 + (mouse_y - obj_y) ** 2) ** 0.5 
+if distance <= obj_radius: 
+# Nesne seçildi 
+3. Piksel Bazlı Çarpışma Kontrolü 
+
+Karmaşık şekilli nesneler için, fare konumundaki pikselin alfa değeri kontrol edilebilir: 
+pixel_color = surface.get_at(mouse_pos) 
+if pixel_color[^3] > 0: # Alpha değeri kontrolü 
+# Nesne seçildi 
+4. Uzamsal Veri Yapıları 
+
+Çok sayıda nesne olduğunda performans için Quadtree veya R-tree gibi uzamsal veri yapıları 
+kullanılabilir 
+[1] 
+. 
+Matplotlib'in Farklı Grafik Türleri 
+
+Simülasyon verilerini analiz etmek için kullanılabilecek çeşitli Matplotlib grafik türleri: 
+1. Çizgi Grafikleri (Line Plots) 
+
+Popülasyon, enerji veya fitness gibi zamanla değişen değerleri göstermek için idealdir: 
+plt.plot(steps, values, label='Label')
+2. Çubuk Grafikleri (Bar Charts) 
+
+Farklı ajan tiplerinin sayısı gibi kategorik verileri karşılaştırmak için kullanışlıdır: 
+plt.bar(categories, values) 
+3. Histogram 
+
+Enerji veya fitness dağılımı gibi değer aralıklarını göstermek için uygundur: 
+plt.hist(values, bins=10) 
+4. Pasta Grafikleri (Pie Charts) 
+
+Tür dağılımı gibi oranları göstermek için idealdir: 
+plt.pie(sizes, labels=labels, autopct='%1.1f%%') 
+5. Isı Haritaları (Heatmaps) 
+
+Sinyal yoğunluğu veya ajan dağılımını görselleştirmek için kullanılır: 
+plt.imshow(data, cmap='viridis') 
+plt.colorbar() 
+Sonuç 
+
+Bu raporda, visualization_v4.py modülüne eklenebilecek çeşitli gelişmiş görselleştirme ve analiz 
+özellikleri sunulmuştur. Önerilen özellikler şunları içermektedir: 
+Ajan Takibi: Kullanıcıların simülasyondaki ajanları seçip detaylı bilgilerini görebilmelerini 
+sağlayan interaktif bir sistem. 
+Gelişmiş Grafikler: Popülasyon ve enerji grafiklerinin yanı sıra fitness, gen frekansı ve tür 
+dağılımı grafikleri ile simülasyon verilerinin daha kapsamlı analizini sağlayan eklentiler. 
+Etkileşim Görselleştirmesi: Ajanlar arasındaki gen transferi, çatışma veya işbirliği gibi 
+etkileşimleri görsel olarak göstererek simülasyonun dinamiklerini daha iyi anlaşılır kılan 
+efektler. 
+
+
+Bu özellikler, NeoMag simülasyonunu hem daha etkileşimli hem de daha bilgilendirici hale 
+getirecek, kullanıcıların davranışları daha kolay gözlemlemesine ve analiz etmesine olanak 
+tanıyacaktır. 
+⁂
+https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/60661543/11b860d7-f7f1-4d4b-8a84-8 
+10dfd45992b/visualization_v4.py 
+
+
+
+GRN Tabanlı Fenotip Haritalama Uygulaması 
+
+BacterialGenome sınıfının _grn_mapping metodunu geliştirerek, bakteri simülasyonunda daha 
+karmaşık ve doğaya uygun genom-fenotip ilişkisini modelleyebiliriz. Bu rapor, GRN (Gen 
+Düzenleyici Ağ) modelinin implementasyonunu ve farklı haritalama stratejilerinin incelenmesini 
+içermektedir. 
+GRN Modeli İmplementasyonu 
+
+Mevcut bacteria_v4.py dosyasında, _grn_mapping metodu henüz yalnızca bir placeholder 
+durumunda ve doğrusal haritalamaya geri dönüyor. İşte sağlanan araştırma belgelerine 
+dayanarak gerçekleştirilmiş kapsamlı bir GRN implementasyonu: 
+def _grn_mapping(self) -> Dict[str, float]: 
+"""Gen Düzenleyici Ağ tabanlı genom-fenotip haritalaması. 
+GRN modeli şu aşamaları takip eder: 
+1. Genomu genlere böler (segmentler) 
+2. XOR tabanlı genler arası etkileşim matrisi oluşturur 
+3. Gen aktivasyon seviyelerini başlatır 
+4. GRN dinamiklerini birkaç adım simüle eder (tanh aktivasyonu) 
+5. Son aktivasyon seviyelerini fenotipik özelliklere haritalar 
+""" 
+# GRN parametreleri (config'e taşınabilir) 
+num_genes = 8 # Gen sayısı 
+num_iterations = 10 # Ağ dinamikleri için iterasyon sayısı 
+try: 
+# 1. Genomu genlere böl 
+gene_length = len(self.binary_sequence) // num_genes 
+genes = [self.binary_sequence[i:i + gene_length] for i in range(0, len(self.binar 
+genes = genes[:num_genes] # Eğer artan bit varsa görmezden gel 
+# Genleri sayısal değerlere dönüştür (gen ekspresyon seviyeleri) 
+gene_values = [self._binary_to_float(gene) for gene in genes] 
+# 2. Genler arası etkileşim matrisini (ağırlıklar) oluştur - XOR tabanlı 
+weights = np.zeros((num_genes, num_genes)) 
+for i in range(num_genes): 
+for j in range(num_genes): 
+# XOR operasyonu için bit stringlerini tamsayıya çevir 
+gene_i_value = int(genes[i], 2) if genes[i] else 0 
+gene_j_value = int(genes[j], 2) if genes[j] else 0 
+# XOR sonucunu [0,1] aralığında normalize et 
+xor_result = gene_i_value ^ gene_j_value 
+max_val = (2**gene_length) - 1
+ weights[i, j] = xor_result / max_val if max_val > 0 else 0 
+# Ağırlıkları tanh için uygun [-1, 1] aralığına ölçekle 
+weights = 2 * weights - 1 
+# 3. Gen aktivasyonlarını başlat (başlangıç gen ekspresyon seviyelerini kullan) 
+activations = np.array(gene_values) 
+# 4. GRN dinamiklerini simüle et (tanh aktivasyonu) 
+for _ in range(num_iterations): 
+# Her gen için net girdi hesapla (diğer genlerin ağırlıklı toplamı) 
+net_inputs = np.dot(weights, activations) 
+# Aktivasyonları tanh fonksiyonu ile güncelle ([-1,1] aralığında sıkıştırır) 
+activations = np.tanh(net_inputs) 
+# Aktivasyonları [0, 1] aralığına normalize et (fenotip haritalama için) 
+normalized_activations = (activations + 1) / 2 
+# 5. Aktivasyonları fenotipik özelliklere haritala 
+trait_names = [ 
+"speed", "size", "energy_efficiency", "reproduction_rate", 
+"perception_range", "quorum_threshold", "signal_production_rate", "attack_pow 
+] 
+phenotype = {} 
+for i, trait in enumerate(trait_names): 
+if i < len(normalized_activations): 
+# Özelliğe özel min/max değerler (linear mapping ile tutarlı olması için) 
+min_v, max_v = 0.0, 1.0 # Varsayılan normalizasyon 
+if trait == "speed": min_v, max_v = 0.5, 3.0 
+elif trait == "size": min_v, max_v = config.DEFAULT_BACTERIA_SIZE * 0.5, 
+elif trait == "energy_efficiency": min_v, max_v = 0.7, 1.3 
+elif trait == "reproduction_rate": min_v, max_v = 0.01, 0.1 
+elif trait == "perception_range": min_v, max_v = config.AGENT_PERCEPTION_ 
+elif trait == "quorum_threshold": min_v, max_v = 0.1, 0.9 
+elif trait == "signal_production_rate": min_v, max_v = 0.05, 0.3 
+elif trait == "attack_power": min_v, max_v = 1.0, 15.0 
+# Normalize edilmiş aktivasyonu istenen aralığa ölçekle 
+phenotype[trait] = min_v + normalized_activations[i] * (max_v - min_v) 
+# Varsayılan değerler (tutarlılık için) 
+phenotype.setdefault("defense", 3.0) 
+phenotype.setdefault("biofilm_threshold", 0.75) 
+logger.debug(f"GRN haritalaması tamamlandı. Fenotip: {phenotype}") 
+return phenotype 
+except Exception as e: 
+logger.error(f"GRN haritalaması sırasında hata: {e}", exc_info=True) 
+logger.warning("Hata nedeniyle doğrusal haritalamaya geri dönülüyor.") 
+return self._linear_mapping() # Hata durumunda doğrusal haritalamaya geri dön
+Hibrit Haritalama İmplementasyonu 
+
+Hibrit haritalama yaklaşımı, bazı özelliklerin doğrusal, diğerlerinin GRN tabanlı belirlenmesini 
+sağlar. Bu yaklaşım _map_to_phenotype metodunda şu şekilde uygulanabilir: 
+elif self.mapping_type == "hybrid": 
+# Hibrit haritalama: Bazı özellikleri doğrusal, bazılarını GRN ile belirle 
+logger.debug("Hibrit haritalama uygulanıyor") 
+# Her iki haritalamayla da fenotipleri hesapla 
+linear_phenotype = self._linear_mapping() 
+grn_phenotype = self._grn_mapping() 
+# Temel fenotip olarak doğrusal haritalamayla başla 
+self.phenotype = linear_phenotype.copy() 
+# Çevresel ve sosyal etkileşim özelliklerini GRN'den al 
+grn_traits = ["quorum_threshold", "signal_production_rate", "attack_power", "defense" 
+for trait in grn_traits: 
+if trait in grn_phenotype: 
+self.phenotype[trait] = grn_phenotype[trait] 
+logger.debug(f"Hibrit haritalama tamamlandı. Fenotip: {self.phenotype}") 
+Haritalama Yöntemlerinin Karşılaştırılması 
+
+Fenotip Çeşitliliği 
+
+GRN tabanlı haritalama, doğrusal haritalamaya göre daha yüksek fenotip çeşitliliği sağlar. 
+Doğrusal haritalamada, her gen segmenti doğrudan bir fenotipik özelliği belirlerken, GRN'de 
+genler arası karmaşık etkileşimler devreye girer. 
+GRN haritalamasında, bir genin etkisi diğer genlerin ekspresyon seviyelerine bağlı olarak değişir. 
+Bu da daha zengin ve çeşitli fenotip dağılımlarına yol açar. Örneğin, aynı sayıda bit mutasyonu 
+doğrusal haritalamada kısıtlı değişikliklere yol açarken, GRN'de daha kapsamlı fenotipik 
+değişimler yaratabilir. 
+Adaptasyon Hızı 
+
+Doğrusal haritalama, mutasyonların etkilerinin doğrudan ve tahmin edilebilir olması nedeniyle, 
+genellikle daha hızlı adaptasyon sağlar. Ancak GRN haritalama, doğrusal haritalamaya göre daha 
+yavaş adaptasyon hızına sahip olabilir çünkü: 
+Mutasyonların etkileri, gen ağındaki karmaşık etkileşimler nedeniyle tahmin edilmesi zordur 
+Tek bir gene yapılan bir mutasyon, ağ etkisi nedeniyle çoklu fenotipik özellikleri etkileyebilir 
+GRN iterasyonları, fenotiplerin istikrarlı hale gelmesi için zaman alabilir 
+
+
+Öte yandan, GRN tabanlı haritalama uzun vadede daha güçlü adaptasyon gösterebilir. Karmaşık 
+ve değişken ortamlarda, gen ağları daha zengin davranış repertuvarı sunabilir ve daha sağlam 
+çözümler üretebilir.
+Performans Değerlendirmesi 
+
+GRN tabanlı haritalama, doğrusal haritalamaya göre daha fazla hesaplama gücü gerektirir. Her 
+bakterinin fenotipini hesaplamak için: 
+Ağırlık matrisinin oluşturulması: O(n²) karmaşıklık (n = gen sayısı) 
+GRN dinamiklerinin simülasyonu: O(n² * i) karmaşıklık (i = iterasyon sayısı) 
+
+
+Büyük popülasyonlar için bu ek hesaplama maliyeti simülasyon performansını önemli ölçüde 
+etkileyebilir. Hibrit yaklaşım ise, doğrusal ve GRN tabanlı haritalama arasında bir denge sağlar. 
+Özellikle, fenotipik özelliklerin yalnızca belirli bir alt kümesini GRN ile hesaplayarak hesaplama 
+maliyetini azaltır. 
+GRN Parametrelerinin Etkisi 
+
+İterasyon Sayısının Etkisi 
+
+GRN modelinde iterasyon sayısı, ağın istikrara kavuşması için önemli bir parametredir: 
+Düşük iterasyon sayısı (5 veya daha az): Ağ tam olarak istikrara kavuşamayabilir, bu da 
+daha değişken ve bazı durumlarda daha yaratıcı fenotipler oluşturabilir. 
+Orta iterasyon sayısı (10-15): Genellikle dengeli bir yaklaşım sunar, yeterli kararlılık 
+sağlarken aşırı hesaplama yükünden kaçınır. 
+Yüksek iterasyon sayısı (20+): Daha istikrarlı fenotipler üretir, ancak hesaplama maliyeti 
+yükselir ve bazı durumlarda fenotip çeşitliliği azalabilir (tüm başlangıç koşulları belirli çekici 
+durumlara yakınsayabilir). 
+
+
+Ağırlık Hesaplama Yöntemleri 
+
+XOR tabanlı ağırlık hesaplaması en yaygın kullanılan yöntemlerden biridir, ancak diğer 
+alternatifler de düşünülebilir: 
+XOR tabanlı: İki genin bitlerinin XOR'u üzerinden hesaplama, kanonik bir yaklaşımdır ve iyi 
+bir fenotip çeşitliliği sağlar. Genler arası simetrik olmayan etkileşimlere izin verir. 
+AND tabanlı: Daha az aktif bağlantı oluşturur, bu da daha az karmaşık ama daha kararlı 
+fenotiplere yol açabilir. 
+OR tabanlı: Daha fazla aktif bağlantı oluşturur, bu da daha karmaşık ancak potansiyel olarak 
+daha kaotik fenotiplere yol açabilir. 
+Rastgele ağırlıklar: Bazen en çeşitli fenotipleri üretebilir, ancak evrimsel olarak süreklilik 
+kaybedilebilir (iki benzer genom, çok farklı fenotipler üretebilir). 
+
+
+Sonuç 
+
+GRN tabanlı fenotip haritalama, doğrusal haritalamaya göre daha fazla biyolojik gerçekliğe 
+sahiptir ve daha zengin fenotip çeşitliliği sağlayabilir. Hibrit yaklaşım ise hesaplama verimliliği ve 
+fenotip çeşitliliği arasında pratik bir denge sunar.
+Araştırma sonuçları, GRN tabanlı haritalamaya geçmenin, özellikle quorum sensing, sinyal üretimi 
+ve bakteriler arası sosyal etkileşimler gibi karmaşık davranışların modellendiği simülasyonlarda 
+önemli avantajlar sağlayabileceğini göstermektedir. İterasyon sayısı ve ağırlık hesaplama yöntemi 
+gibi parametreler, GRN dinamiklerini ve sonuç olarak fenotip dağılımını önemli ölçüde etkileyebilir. 
+⁂
+İleri GPU Optimizasyonu: Spatial Hashing Sonrası 
+CuPy ile Performans İyileştirmeleri 
+
+Spatial hashing implementasyonunun ardından, GPU kullanımını daha da optimize etmek için 
+çeşitli stratejiler mevcuttur. Bu raporda, profilleme araçlarını kullanarak darboğazları belirleme, 
+CuPy kütüphanesinin sunduğu vektörizasyon ve kernel programlama olanaklarıyla bu 
+darboğazları aşma ve CPU-GPU veri transferlerini minimize etme yaklaşımları detaylı olarak ele 
+alınmıştır. 
+Performans Profilleme Yöntemleri 
+
+cProfile ve NVIDIA Profilleme Araçlarını Kullanma 
+
+Spatial hashing uygulamasından sonra yeni darboğazları tespit etmek için profilleme araçlarının 
+etkin kullanımı kritik önem taşır. Python'un cProfile modülü, kod bloklarının çalışma sürelerini 
+ölçmek için güçlü bir başlangıç noktasıdır 
+[1] 
+. Ancak GPU kodunu optimize ederken NVIDIA'nın 
+özel araçları daha kapsamlı bilgiler sağlar. 
+NVIDIA Nsight Systems, sistem çapında performans analizi için tasarlanmış bir araçtır ve 
+uygulamanın algoritmaları görselleştirerek CPU-GPU etkileşimlerini detaylı şekilde incelemenize 
+olanak tanır 
+[2] 
+. Bu araç, CPU paralelleştirme, GPU streaming-multiprocessor (SM) optimizasyonu 
+ve sistem iş yükü gibi katmanları görselleştirirerek optimizasyon fırsatlarını belirlemenize yardımcı 
+olur 
+[2] 
+. 
+CuPy ayrıca kendi benchmark yardımcı programını sunar, bu da GPU kodunu zamanlamak için 
+özellikle yararlıdır: 
+from cupyx.profiler import benchmark 
+def my_func(a): 
+return cp.sqrt(cp.sum(a**2, axis=-1)) 
+a = cp.random.random((256, 1024)) 
+print(benchmark(my_func, (a,), n_repeat=20)) 
+Bu yöntem, GPU yürütmesinin CPU'ya göre asenkron olması sorununu çözer ve doğru 
+zamanlamaları elde etmek için CUDA olaylarını kullanır 
+[3] 
+. Çıktısında hem CPU hem de GPU 
+zamanları gösterilir.
+Profilleme Sırasında Dikkat Edilmesi Gerekenler 
+
+Profilleme yaparken bir seferlik maliyetlerin (one-time overheads) farkında olmak önemlidir. İlk 
+kez bir CuPy fonksiyonu çağrıldığında, CUDA bağlamının oluşturulması saniyeler sürebilir 
+[3] 
+. 
+Ayrıca, özelleştirilmiş kerneller ilk çalıştırıldıklarında derlenmesi zaman alabilir. 
+Darboğaz Belirleme ve Analiz Stratejileri 
+
+Tipik Darboğazlar ve Teşhis Yöntemleri 
+
+Spatial hashing sonrası genellikle şu bileşenler darboğaz oluşturabilir: 
+Agent.update döngüleri: Çok sayıda ajan üzerinde iterasyon yaparken 
+Fenotip hesaplama: Karmaşık matematiksel işlemler içeren fenotip hesaplamaları 
+GRN/QRL/QGT adımları: Genetik düzenleme ağları veya diğer öğrenme algoritmalarındaki 
+hesaplama yoğun işlemler 
+CPU-GPU veri transferleri: Her iterasyonda gereksiz veri transferleri 
+
+
+Darboğazları belirlerken şu yaklaşımlar etkili olur: 
+Benchmark aracını kullanarak şüpheli fonksiyonları profilleme 
+Nsight Systems ile zaman çizelgesini görselleştirme 
+Line profiler ile satır satır performans analizi yapma 
+
+
+CuPy ile Vektörizasyon Teknikleri 
+
+NumPy'den CuPy'ye Geçiş Prensipleri 
+
+CuPy, NumPy'nin GPU hızlandırmalı bir alternatifidir ve aynı API'yi sunmaktadır 
+[4] 
+. NumPy 
+kodunu CuPy'ye taşımak genellikle basittir: 
+# NumPy veri (CPU) 
+x_cpu = np.linspace(0, 2, 5) 
+# CuPy veri (GPU) 
+x_gpu = cp.linspace(2, 4, 5) 
+Veri transferi için CuPy şu fonksiyonları sağlar: 
+# CPU'dan GPU'ya veri taşıma 
+x_gpu = cp.asarray(x_cpu) 
+# GPU'dan CPU'ya veri taşıma 
+x_cpu = cp.asnumpy(x_gpu)
+Vektörize İşlemler İle Döngüleri Ortadan Kaldırma 
+
+NumPy'deki vectorize işlevinin doğrudan CuPy karşılığı bulunmamaktadır 
+[5] 
+. Bunun yerine, 
+CuPy'nin vektörizasyon için çeşitli yaklaşımlar sunmaktadır: 
+NumPy-uyumlu işlemler: Mümkün olduğunca diziler üzerinde yapılan işlemleri kullanın 
+ElementwiseKernel: Özelleştirilmiş vektörizasyon için kullanılabilir 
+cupy.fuse: Python kodundan otomatik olarak GPU kerneli oluşturur 
+
+
+Örneğin, StackOverflow'daki bir örnekte sıklıkla görülen şu fonksiyon: 
+def rate(tmean, x, y, z): 
+rate = 1/z/(1 + math.exp(-x*(tmean-y))) 
+if rate < 0: 
+rate = 0 
+return rate 
+Burada np.vectorize(rate) yerine CuPy'nin ElementwiseKernel'ini kullanmak çok daha verimli 
+olacaktır 
+[5] 
+. 
+Özel GPU Kernelleri Oluşturma 
+
+ElementwiseKernel Kullanımı 
+
+ElementwiseKernel, vektörize işlemler için özel bir GPU kernel'i oluşturmanıza olanak tanır 
+[6] 
+: 
+rate_kernel = cp.ElementwiseKernel( 
+'float32 tmean, float32 x, float32 y, float32 z', 
+'float32 output', 
+''' 
+output = 1.0f/z/(1.0f + expf(-x*(tmean-y))); 
+if (output < 0.0f) output = 0.0f; 
+''', 
+'rate_kernel' 
+)
+# Kullanımı 
+output = cp.zeros_like(tmean) 
+rate_kernel(tmean, x, y, z, output) 
+ElementwiseKernel, giriş parametreleri, çıkış parametreleri ve kernel kodu belirtmenizi sağlar. 
+Derlenen kernel önbelleğe alınır ve aynı veri türleri için tekrar kullanılabilir 
+[6] 
+. 
+RawKernel ile Daha Fazla Kontrol 
+
+Daha fazla kontrole ihtiyaç duyduğunuzda, RawKernel doğrudan CUDA C/C++ kodu yazmanıza 
+olanak sağlar 
+[7] 
+:
+kernel_code = r''' 
+extern "C" __global__ 
+void my_custom_kernel(const float* input, float* output, int size) { 
+int idx = blockDim.x * blockIdx.x + threadIdx.x; 
+if (idx < size) { 
+// Özel işlemleriniz 
+output[idx] = __expf(input[idx]); 
+} 
+} ''' 
+kernel = cp.RawKernel(kernel_code, 'my_custom_kernel') 
+# Kullanımı 
+threads_per_block = 256 
+blocks_per_grid = (input_array.size + threads_per_block - 1) // threads_per_block 
+kernel((blocks_per_grid,), (threads_per_block,), (input_array, output_array, input_array. 
+RawKernel'in avantajı, paylaşılan bellek, atomik işlemler ve thread senkronizasyonu gibi CUDA'nın 
+tüm özelliklerine erişebilmenizdir 
+[7] 
+. 
+CPU-GPU Veri Transferlerini Optimize Etme 
+
+Veri Transferi Maliyetlerini Azaltma 
+
+CPU-GPU arasındaki veri transferleri genellikle en büyük darboğazlardan biridir. Bu transferleri 
+optimize etmek için: 
+Hesaplamayı tamamen GPU'da tutun: Mümkün olduğunca tüm işlemleri GPU'da 
+gerçekleştirin ve sadece final sonuçları CPU'ya geri aktarın. 
+Asenkron veri transferleri kullanın: CuPy, asenkron bellek kopyalamalarını destekler: 
+
+
+stream = cp.cuda.Stream() 
+with stream: 
+x_gpu = cp.asarray(x_cpu) 
+# GPU işlemleri burada gerçekleşir 
+# CPU ve GPU eş zamanlı çalışabilir 
+Pinned (sayfalanmamış) bellek kullanın: Daha hızlı veri transferi sağlar: 
+
+
+pinned_array = cp.cuda.alloc_pinned_memory(x_cpu.nbytes) 
+src = np.frombuffer(pinned_array, x_cpu.dtype, x_cpu.size).reshape(x_cpu.shape) 
+src[...] = x_cpu 
+x_gpu = cp.asarray(src)
+Örnek Spatial Hashing Sonrası Optimizasyon Senaryoları 
+
+Ajan Güncelleme Döngüsünün Optimizasyonu 
+
+Agent.update döngüleri genellikle çok sayıda ajan üzerinde iterasyon yapar ve her bir ajan için 
+fenotip hesaplamaları gerçekleştirir. Bu yapı şu şekilde optimize edilebilir: 
+# Döngü yerine vektörize işlemler kullanma 
+position_update_kernel = cp.ElementwiseKernel( 
+'float32 pos_x, float32 pos_y, float32 vel_x, float32 vel_y, float32 dt', 
+'float32 new_pos_x, float32 new_pos_y', 
+''' 
+new_pos_x = pos_x + vel_x * dt; 
+new_pos_y = pos_y + vel_y * dt; 
+''', 
+'position_update' 
+)
+# Tüm ajanları tek seferde güncelleme 
+position_update_kernel( 
+agents_pos_x, agents_pos_y, 
+agents_vel_x, agents_vel_y, 
+dt, 
+new_pos_x, new_pos_y 
+) 
+Fenotip Hesaplama Optimizasyonu 
+
+Karmaşık fenotip hesaplamalarını GPU'da vektörize etmek için ElementwiseKernel kullanılabilir: 
+fenotip_kernel = cp.ElementwiseKernel( 
+'float32 g1, float32 g2, float32 g3, float32 env_factor', 
+'float32 fenotype', 
+''' 
+// Karmaşık fenotipi hesapla 
+fenotype = g1 * g2 / (1.0f + g3 * env_factor); 
+fenotype = fmaxf(0.0f, fenotype); // Negatif değerleri kırp 
+''', 
+'fenotip_calc' 
+) 
+GRN Adımlarının Optimizasyonu 
+
+Genetik düzenleme ağları (GRN) genellikle matris operasyonları içerir ve CuPy'nin hızlı matris 
+çarpımlarından faydalanabilir: 
+# GRN matris çarpımını optimize etme 
+def grn_step(states, weights, biases): 
+# CuPy'nin hızlı matris operasyonlarını kullan
+ new_states = cp.tanh(cp.dot(states, weights) + biases) 
+return new_states 
+Sonuç 
+
+Spatial hashing sonrası GPU optimizasyonu, profilleme araçlarıyla darboğazları belirleme ve 
+CuPy'nin sağladığı araçlarla bu darboğazları aşma sürecidir. CuPy'nin ElementwiseKernel ve 
+RawKernel gibi özellikleri, özel vektörize işlemler oluşturmak için güçlü araçlar sunar. CPU-GPU 
+veri transferlerini minimize ederek ve işlemleri GPU üzerinde tutarak performansı önemli ölçüde 
+artırmak mümkündür. 
+Bu optimizasyon çalışmaları sonucunda, agent.update döngüleri, fenotip hesaplamaları ve 
+GRN/QRL/QGT adımları gibi yoğun hesaplama gerektiren işlemlerde önemli hız artışları elde 
+edilebilir. Başarılı bir optimizasyon süreci, kodu profilleme, darboğazları belirleme ve uygun GPU 
+programlama tekniklerini uygulama adımlarını içerir. 
+⁂ 
+https://docs.nersc.gov/development/languages/python/profiling-debugging-python/ 
+https://developer.nvidia.com/nsight-systems 
+https://docs.cupy.dev/en/stable/user_guide/performance.html 
+https://www.cisl.ucar.edu/sites/default/files/2022-09/13_CuPyAndLegate.pdf 
+https://stackoverflow.com/questions/58696378/how-should-i-do-instead-of-using-numpy-vectorize-in 
+-cupy 
+https://docs.cupy.dev/en/stable/reference/generated/cupy.ElementwiseKernel.html 
+https://www.programcreek.com/python/example/111761/cupy.RawKernel 
+
+
+
+Kuantum Hesaplama ile Pekiştirmeli Öğrenme ve 
+Oyun Teorisi Uygulamaları 
+
+Bu rapor, kuantum hesaplama uygulamalarının pekiştirmeli öğrenme ve oyun teorisi alanlarındaki 
+kullanımını incelemektedir. İlk olarak Kuantum Pekiştirmeli Öğrenme (QRL) için Policy Gradient 
+yönteminin implementasyonu ve QuantumDecisionMechanism.learn metodunun geliştirilmesi ele 
+alınmıştır. İkinci olarak, QuantumGameManager sınıfı için EWL (Eisert-Wilkens-Lewenstein) 
+protokolüne dayalı kuantum oyun teorisi uygulaması detaylandırılmıştır. Her iki uygulama da 
+Qiskit kütüphanesi kullanılarak gerçekleştirilmiş, SPSA optimizeri ve kuantum devreleri ile simüle 
+edilmiştir. 
+Kuantum Pekiştirmeli Öğrenme (QRL) Eğitimi 
+
+Policy Gradient Yöntemi ve Teorik Arka Plan 
+
+Policy Gradient algoritması, pekiştirmeli öğrenmenin temel yaklaşımlarından biridir ve politika 
+parametrelerini doğrudan optimize etmeyi amaçlar. Bu algoritma, performans ölçüsü J(θ) 
+üzerinden gradient ascent yaklaşımıyla çalışır. 
+Policy Gradient yönteminde, performans ölçüsü J(θ), politika parametreleri θ'ya bağlı olarak 
+tanımlanır. Episodik görevlerde, performans ölçüsü başlangıç durumunun değeri olarak ifade 
+edilir: 
+J(θ) = V
+πθ(s0) 
+Bu değer, s0 durumundan başlayarak πθ politikasını takip ederek beklenen getiriyi gösterir 
+[1] 
+. 
+Getiri (return) G, episod boyunca alınan tüm ödüllerin toplamıdır. Politika θ parametreleriyle temsil 
+edildiğinden, farklı parametreler farklı performans değerleri üretir 
+[1] 
+. 
+Policy Gradient teoremi, J(θ)'nın gradyentini şu şekilde gösterir: 
+∇θJ(θ) ∝ Σ
+s μ
+π
+(s) Σ
+a Q
+π
+(s,a) ∇θπ(a|s,θ) 
+Burada μ
+π
+(s), π politikası altındaki durum dağılımıdır 
+[1] 
+. 
+QRL için QuantumDecisionMechanism.learn Metodunun Geliştirilmesi 
+
+
+Durum Kodlaması ve Zenginleştirme 
+
+Kuantum pekiştirmeli öğrenmede, klasik durum verilerini kuantum bilgisayarda işlenebilir hale 
+getirmek için durum kodlaması önemlidir. _encode_state metodunu şu özelliklerle 
+zenginleştirebiliriz: 
+def _encode_state(self, state): 
+qc = QuantumCircuit(self.num_qubits) 
+# Mevcut özelliklere ek olarak yeni özellikler ekleyelim 
+features = [ 
+state.position.x / self.environment_size, # x pozisyonu (normalize edilmiş) 
+state.position.y / self.environment_size, # y pozisyonu (normalize edilmiş) 
+state.energy / state.max_energy, # enerji seviyesi (normalize edilmiş) 
+state.nearest_neighbor_distance / self.max_distance, # en yakın komşu mesafesi 
+state.local_food_density / self.max_density, # yerel besin yoğunluğu 
+state.predator_distance / self.max_distance # avcı mesafesi 
+] 
+# ZZFeatureMap kullanarak özellikleri kuantum durumuna encode edelim 
+feature_map = ZZFeatureMap(self.num_qubits, feature_dimension=len(features)) 
+bound_circuit = feature_map.bind_parameters(features) 
+qc.compose(bound_circuit, inplace=True) 
+return qc 
+Bu kodlama, klasik özellikleri kuantum durumuna dönüştürürken daha zengin bir temsil sağlar 
+[2] 
+. 
+Ödül Fonksiyonu Tasarımı 
+
+Bakteriyel ajanlar için uygun bir ödül fonksiyonu, enerji kazanımı, hayatta kalma süresi ve üreme 
+başarısını içermelidir: 
+def calculate_reward(self, state, next_state, action): 
+reward = 0 
+# Enerji kazanımı ödülü 
+energy_gain = next_state.energy - state.energy 
+reward += 2.0 * energy_gain / state.max_energy 
+# Hayatta kalma ödülü (her adımda küçük bir pozitif değer) 
+reward += 0.1 
+# Üreme başarısı ödülü (eğer üreme gerçekleştiyse) 
+if next_state.reproduction_success: 
+reward += 5.0 
+# Tehlikeli bölgelerden kaçınma ödülü 
+if next_state.predator_distance > state.predator_distance: 
+reward += 0.5 
+# Besin arama davranışını ödüllendirme 
+if next_state.local_food_density > state.local_food_density:
+ reward += 0.3 
+return reward 
+Bu ödül fonksiyonu, ajanın hayatta kalma, enerji toplama ve üreme hedeflerini dengeler. 
+SPSA Optimizer ve Kuantum Sinir Ağı 
+
+SPSA (Simultaneous Perturbation Stochastic Approximation), az sayıda fonksiyon 
+değerlendirmesi gerektiren stokastik bir optimizasyon algoritmasıdır. Qiskit'te SPSA, kuantum 
+devrelerini optimize etmek için kullanılabilir 
+[3] 
+. 
+from qiskit.algorithms.optimizers import SPSA 
+from qiskit_machine_learning.neural_networks import SamplerQNN 
+from qiskit_machine_learning.algorithms import VQC 
+def learn(self, experiences): 
+# Deneyim örneklerini seçelim 
+batch = random.sample(self.replay_buffer, min(len(self.replay_buffer), self.batch_siz 
+# SPSA optimizeri oluşturalım 
+optimizer = SPSA( 
+maxiter=100, 
+learning_rate=0.1, 
+perturbation=0.1, 
+last_avg=1, 
+resamplings=1 
+) 
+# Eğitim verilerini hazırlayalım 
+X_train = [] 
+y_train = [] 
+for state, action, next_state, reward, done in batch: 
+# Durumu kodla 
+encoded_state = self._encode_state(state) 
+# Ödül ve hedef hesaplama (Policy Gradient için) 
+target = np.zeros(self.action_space) 
+target[action] = reward # Basitleştirilmiş Policy Gradient yaklaşımı 
+X_train.append(encoded_state) 
+y_train.append(target) 
+# SamplerQNN oluşturma 
+sampler_qnn = SamplerQNN( 
+circuit=self.create_decision_circuit(), 
+input_params=self.feature_params, 
+weight_params=self.strategy_params, 
+interpret=self._interpret_measurement, 
+output_shape=self.action_space 
+) 
+# VQC oluşturma ve eğitme
+ vqc = VQC(sampler_qnn, optimizer, callback=self._callback) 
+vqc.fit(X_train, y_train) 
+# Öğrenilen parametreleri güncelle 
+self.strategy_params = vqc.weights 
+Bu implementasyon, SamplerQNN ve VQC sınıflarını kullanarak kuantum devresi parametrelerini 
+SPSA optimizeri ile günceller 
+[2] 
+. 
+Deneyim Tekrarı (Replay Buffer) Mekanizması 
+
+Deneyim tekrarı, pekiştirmeli öğrenmede verimliliği artıran bir tekniktir: 
+def add_experience(self, state, action, next_state, reward, done): 
+# Deneyimi replay buffer'a ekle 
+self.replay_buffer.append((state, action, next_state, reward, done)) 
+# Buffer boyutunu sınırla 
+if len(self.replay_buffer) > self.max_buffer_size: 
+self.replay_buffer.pop(0) # En eski deneyimi çıkar 
+Bu mekanizma, ajanın geçmiş deneyimlerinden tekrar öğrenmesini sağlar. 
+Kuantum Oyun Teorisi (QGT) Etkileşimi 
+
+EWL Protokolü ve Teorik Arka Plan 
+
+Eisert, Wilkens ve Lewenstein (EWL) tarafından geliştirilen protokol, klasik iki oyunculu oyunların 
+kuantum mekaniksel genellemesini sağlar 
+[4] 
+. Bu protokol özellikle Mahkum İkilemi gibi oyunlarda 
+kuantum stratejilerin klasik stratejilere göre avantajlarını göstermiştir. 
+EWL protokolünde oyun şu adımlardan oluşur: 
+Başlangıç durumu |00⟩ hazırlanır 
+Entanglement operatörü J(γ) uygulanır 
+Oyuncular kuantum strateji operatörlerini (UA, UB) uygular 
+Disentanglement operatörü J
+†
+(γ) uygulanır 
+Ölçüm yapılır ve sonuçlara göre ödüller hesaplanır 
+[4] 
+
+
+Entanglement operatörü J(γ), kuantum dolaşıklığı oluşturur ve şu şekilde tanımlanır: 
+J(γ) = exp(iγ X⊗X/2) 
+Bu operatör, γ = π/2 değerinde maksimum dolaşıklık oluşturur 
+[4] 
+.
+QuantumGameManager İmplementasyonu 
+
+Kuantum Devre Oluşturma 
+
+EWL protokolüne uygun bir kuantum devresi oluşturmak için: 
+def create_game_circuit(self, strategy_params_A, strategy_params_B, gamma=np.pi/2): 
+""" 
+EWL protokolüne göre kuantum oyun devresi oluşturur 
+Args: 
+strategy_params_A: A oyuncusunun strateji parametreleri (θ, φ) 
+strategy_params_B: B oyuncusunun strateji parametreleri (θ, φ) 
+gamma: Dolaşıklık derecesi 
+Returns: 
+QuantumCircuit: Hazırlanan oyun devresi 
+""" 
+# 2 qubit'lik bir devre oluştur 
+qc = QuantumCircuit(2, 2) 
+# Başlangıç durumu |00⟩ 
+# Dolaşıklık operatörü J(γ) 
+qc.rx(gamma, 0) 
+qc.cx(0, 1) 
+qc.rx(-gamma, 0) 
+# A oyuncusunun stratejisi U_A(θ_A, φ_A) 
+theta_A, phi_A = strategy_params_A 
+qc.ry(theta_A, 0) 
+qc.rz(phi_A, 0) 
+# B oyuncusunun stratejisi U_B(θ_B, φ_B) 
+theta_B, phi_B = strategy_params_B 
+qc.ry(theta_B, 1) 
+qc.rz(phi_B, 1) 
+# Disentanglement operatörü J†(γ) 
+qc.rx(gamma, 0) 
+qc.cx(0, 1) 
+qc.rx(-gamma, 0) 
+# Ölçüm 
+qc.measure([0, 1], [0, 1]) 
+return qc 
+Bu devre, EWL protokolünün temel yapısını takip eder ve oyuncuların SU(2) stratejilerini 
+parametrik kapılar aracılığıyla temsil eder 
+[4] 
+.
+Payoff Matrisleri ve Hesaplama 
+
+Payoff hesaplaması için önce 2x2 oyunlar için payoff matrislerini tanımlamamız gerekir: 
+PAYOFF_MATRICES = { 
+"prisoners_dilemma": { 
+"A": np.array([ 
+[3, 0], # CC, CD 
+[5, 1] # DC, DD 
+]), 
+"B": np.array([ 
+[3, 5], # CC, DC 
+[0, 1] # CD, DD 
+]) 
+}, 
+"chicken_game": { 
+"A": np.array([ 
+[3, 1], # CC, CD 
+[4, 0] # DC, DD 
+]), 
+"B": np.array([ 
+[3, 4], # CC, DC 
+[1, 0] # CD, DD 
+]) 
+} 
+} 
+Ölçüm sonuçlarına göre payoff hesaplama: 
+def calculate_payoffs(self, counts, game_type="prisoners_dilemma"): 
+""" 
+Ölçüm sonuçlarına göre beklenen payoff değerlerini hesaplar 
+Args: 
+counts: Kuantum devre ölçüm sonuçları 
+game_type: Oyun tipi (prisoners_dilemma veya chicken_game) 
+Returns: 
+tuple: (A_payoff, B_payoff) payoff değerleri 
+""" 
+# Payoff matrislerini al 
+A_payoff_matrix = self.PAYOFF_MATRICES[game_type]["A"] 
+B_payoff_matrix = self.PAYOFF_MATRICES[game_type]["B"] 
+# Sonuçları analiz et 
+total_shots = sum(counts.values()) 
+# Beklenen payoff hesaplama 
+A_payoff = 0 
+B_payoff = 0 
+# Sonuç formatı: '00' (CC), '01' (CD), '10' (DC), '11' (DD) 
+for outcome, count in counts.items(): 
+# Sonucu tersine çevir (Qiskit'in ölçüm sonuçları tersine çevrilmiş)
+ reversed_outcome = outcome[::-1] 
+# Sonucu indekslere dönüştür 
+row = int(reversed_outcome[^0]) 
+col = int(reversed_outcome[^1]) 
+# Olasılığı hesapla 
+probability = count / total_shots 
+# Payoff'ları hesapla 
+A_payoff += probability * A_payoff_matrix[row, col] 
+B_payoff += probability * B_payoff_matrix[row, col] 
+return A_payoff, B_payoff 
+Bu fonksiyon, ölçüm sonuçlarına göre beklenen payoff değerlerini hesaplar 
+[4] 
+. 
+Etkileşim Fonksiyonu 
+
+Etkileşimi çalıştırmak için: 
+def run_interaction(self, agent_A, agent_B, game_type="prisoners_dilemma", gamma=np.pi/2) 
+""" 
+İki ajan arasında kuantum oyun etkileşimini çalıştırır 
+Args: 
+agent_A: Birinci ajan 
+agent_B: İkinci ajan 
+game_type: Oyun tipi 
+gamma: Dolaşıklık derecesi 
+Returns: 
+tuple: (A_payoff, B_payoff) 
+""" 
+# Ajanların strateji parametrelerini al 
+strategy_params_A = agent_A.get_quantum_strategy_params() 
+strategy_params_B = agent_B.get_quantum_strategy_params() 
+# Oyun devresini oluştur 
+qc = self.create_game_circuit(strategy_params_A, strategy_params_B, gamma) 
+# Devreyi çalıştır 
+simulator = Aer.get_backend('qasm_simulator') 
+job = execute(qc, simulator, shots=1024) 
+result = job.result() 
+counts = result.get_counts(qc) 
+# Payoff'ları hesapla 
+payoffs = self.calculate_payoffs(counts, game_type) 
+return payoffs 
+Bu fonksiyon, iki ajanın strateji parametrelerini alır, uygun kuantum devresini oluşturur, simüle 
+eder ve sonuçları hesaplar.
+QRL ve QGT Entegrasyonu 
+
+QRL ve QGT uygulamalarının entegrasyonu, ajanların hem pekiştirmeli öğrenme yoluyla optimal 
+kararlar almasını hem de kuantum oyun teorisi çerçevesinde diğer ajanlarla etkileşime girmesini 
+sağlar. Bu entegrasyon, doğal sistemlerdeki kompleks davranışları modellemek için güçlü bir 
+çerçeve sunar. 
+Ajanlar, QRL ile öğrendikleri stratejileri QGT etkileşimlerinde kullanarak evrimsel süreçleri simüle 
+edebilirler. Bu yaklaşım, özellikle biyolojik sistemlerdeki karar verme mekanizmalarını anlamak için 
+değerlidir. 
+Sonuç ve Gelecek Çalışmalar 
+
+Bu raporda, kuantum hesaplama teknolojilerinin pekiştirmeli öğrenme ve oyun teorisi alanlarındaki 
+uygulamalarını inceledik. Policy Gradient algoritması kullanarak QRL uygulaması ve EWL 
+protokolü ile QGT etkileşimi için detaylı implementasyon önerileri sunduk. 
+Gelecek çalışmalarda şu konular ele alınabilir: 
+Daha karmaşık kuantum devre mimarileri ve feature map'ler ile performans karşılaştırmaları 
+Çok oyunculu kuantum oyun teorisi uygulamaları 
+Gerçek kuantum bilgisayarlar üzerinde simülasyonların test edilmesi 
+Kuantum gürültü ve hata düzeltme stratejilerinin incelenmesi 
+
+
+Bu çalışmalar, kuantum hesaplamanın pratik uygulamalarını geliştirmeye ve doğal sistemlerdeki 
+kompleks davranışları daha iyi anlamaya katkıda bulunacaktır. 
+⁂ 
+https://www.youtube.com/watch?v=AiFM6LZ7Vuo 
+https://qiskit-community.github.io/qiskit-machine-learning/locale/tr_TR/_modules/index.html 
+https://docs.quantum.ibm.com/api/qiskit/0.31/qiskit.algorithms.optimizers.SPSA 
+https://dice.cyfronet.pl/papers/Filip_Galas_msc.pdf 
+
+
+

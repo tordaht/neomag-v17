@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoMag: Kendi Dijital Evreninizi Yaratın</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --primary-color: #0d1117;
+            --secondary-color: #161b22;
+            --accent-color: #58a6ff;
+            --text-color: #c9d1d9;
+            --text-secondary-color: #8b949e;
+            --border-color: #30363d;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            margin: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.15;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .header {
+            padding: 2rem 0;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: var(--text-secondary-color);
+        }
+
+        .section {
+            padding: 4rem 0;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: var(--text-color);
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background-color: var(--accent-color);
+            border-radius: 2px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--secondary-color);
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+            border-radius: 10px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            margin-top: 0;
+        }
+
+        .marketing-points-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+
+        .marketing-points-table th, .marketing-points-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .marketing-points-table th {
+            color: var(--accent-color);
+            font-size: 1.2rem;
+        }
+        
+        .marketing-points-table td strong {
+             color: #3CE7CB;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 4rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary-color);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <header class="header">
+        <div class="container">
+            <h1>NeoMag: Kendi Dijital Evreninizi Yaratın</h1>
+            <p>Bu, bir yazılım değil; bu, keşif için bir oyun alanı, öğrenme için bir laboratuvar ve hayal gücü için bir tuvaldir.</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="section" id="what-it-does">
+            <div class="container">
+                <h2 class="section-title">NeoMag Ne Yapar? ✨</h2>
+                <div class="grid">
+                    <div class="card">
+                        <h3>Yaşam Başlatır</h3>
+                        <p>Simülasyon, "genetik kodları" (DNA'ları) olan yüzlerce dijital canlı ("ajan") ile başlar. Bu kodlar, onların hızını, boyutunu, ne kadar agresif olduklarını ve hatta nasıl "düşündüklerini" belirler.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Hayatta Kalma Mücadelesi</h3>
+                        <p>Ajanlar, enerji bulmak (yemek yemek), tehlikelerden kaçınmak ve üremek için kendi yapay zekalarını kullanırlar. Tıpkı doğadaki gibi, çevreye en iyi uyum sağlayanlar hayatta kalır.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Evrimi Gözlemler</h3>
+                        <p>Yeterince enerji toplayan ajanlar ürer ve genetik kodlarını yavrularına aktarır. Binlerce yıl süren evrim, dakikalar içinde gözlerinizin önünde gerçekleşir.</p>
+                    </div>
+                     <div class="card">
+                        <h3>Etkileşime Gir</h3>
+                        <p>Kullanıcı, simülasyonun "kaderini" değiştirebilir. Parametreleri değiştirerek ajanları daha agresif yapabilir veya simülasyonu anlık olarak durdurup analiz edebilir.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="marketing-points">
+            <div class="container">
+                <h2 class="section-title">Neden Etkileyici? 🔑</h2>
+                <div class="card">
+                    <table class="marketing-points-table">
+                        <thead>
+                            <tr>
+                                <th>Özellik</th>
+                                <th>Faydası (Pazarlama Mesajı)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Görsel Şölen</strong></td>
+                                <td><strong>"Evrimi Canlı İzleyin!"</strong> - Karmaşık verileri ve formülleri unutun. Yüzlerce canlının 3D bir dünyada hareket ettiğini, etkileşime girdiğini ve evrimleştiğini gerçek zamanlı olarak izleyin.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tam Etkileşim</strong></td>
+                                <td><strong>"Sanal Dünyanızın Kurallarını Siz Belirleyin!"</strong> - Simülasyonun gidişatını anında değiştirin. Canlıların ne kadar hızlı koşacağını, ne kadar agresif olacaklarını siz kontrol edin ve sonuçları anında gözlemleyin.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Gelişmiş Yapay Zeka</strong></td>
+                                <td><strong>"Sıfırdan Öğrenen Dijital Beyinler!"</strong> - Her ajanın, kendi kararlarını veren bir sinir ağı (yapay zeka beyni) vardır. Bu beyinler, nesiller boyunca evrimleşerek daha karmaşık ve akıllı davranışlar sergiler.</td>
+                            </tr>
+                             <tr>
+                                <td><strong>Bilimsel Değer</strong></td>
+                                <td><strong>"Eğlence ve Bilim Bir Arada!"</strong> - NeoMag, sadece büyüleyici bir görsel deneyim değil, aynı zamanda evrimsel biyoloji ve yapay zeka konularında ciddi bir eğitim ve araştırma aracıdır.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Yüksek Performans</strong></td>
+                                <td><strong>"Binlerce Canlı, Akıcı Deneyim!"</strong> - Gelişmiş render teknolojileri sayesinde, binlerce ajanın bulunduğu karmaşık simülasyonlar bile standart bir bilgisayarda akıcı bir şekilde çalışır.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+         <section class="section" id="target-audience">
+            <div class="container">
+                <h2 class="section-title">Hedef Pazar 🎯</h2>
+                <div class="grid">
+                    <div class="card"><h3>Eğitim Kurumları ve Öğrenciler</h3><p>Biyoloji, bilgisayar bilimi ve yapay zeka dersleri için mükemmel bir interaktif öğrenme aracı.</p></div>
+                    <div class="card"><h3>Teknoloji ve Bilim Meraklıları</h3><p>Evrim ve yapay zeka konularına ilgi duyan herkes için büyüleyici bir "dijital karınca çiftliği".</p></div>
+                    <div class="card"><h3>Araştırmacılar</h3><p>Hipotezleri test etmek ve popülasyonlar üzerinde sanal deneyler yapmak için güçlü bir platform.</p></div>
+                    <div class="card"><h3>İçerik Üreticileri</h3><p>YouTube, Twitch gibi platformlarda izleyicileriyle etkileşimli ve görsel olarak zengin bilimsel içerik oluşturmak için ideal.</p></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2024 NeoMag. Tüm hakları saklıdır.</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            const particlesCount = 5000;
+            const positions = new Float32Array(particlesCount * 3);
+
+            for (let i = 0; i < particlesCount * 3; i++) {
+                positions[i] = (Math.random() - 0.5) * 2000;
+            }
+
+            const particlesGeometry = new THREE.BufferGeometry();
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                color: 0x58a6ff,
+                size: 1.5,
+                transparent: true,
+                blending: THREE.AdditiveBlending
+            });
+
+            const particleSystem = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particleSystem);
+            
+            camera.position.z = 5;
+
+            let mouseX = 0, mouseY = 0;
+            document.addEventListener('mousemove', (event) => {
+                 mouseX = (event.clientX - window.innerWidth / 2) / 100;
+                 mouseY = (event.clientY - window.innerHeight / 2) / 100;
+            });
+
+            const animate = () => {
+                requestAnimationFrame(animate);
+                
+                particleSystem.rotation.x += 0.0001;
+                particleSystem.rotation.y += 0.0002;
+                
+                camera.position.x += (mouseX - camera.position.x) * 0.05;
+                camera.position.y += (-mouseY - camera.position.y) * 0.05;
+                camera.lookAt(scene.position);
+
+                renderer.render(scene, camera);
+            };
+
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        });
+    </script>
+</body>
+</html> 

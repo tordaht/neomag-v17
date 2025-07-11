@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoMag v17.1 - Biyofiziksel Simülasyon</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Ana Stil Dosyası -->
+    <link rel="stylesheet" href="/src/style.css">
+    
+    <script src="https://cdn.plot.ly/plotly-2.33.0.min.js" charset="utf-8"></script>
+    <script async src="/node_modules/es-module-shims/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+        "imports": {}
+    }
+    </script>
+</head>
+<body>
+    <header class="main-header">
+        <h1>NeoMag Simulation Platform <span class="version">v17.1</span></h1>
+    </header>
+    <main id="main-content">
+        <div class="panel left-panel">
+            <div class="panel-header">REAL-TIME 2D SIMULATION</div>
+            <div class="content-box-canvas">
+                 <canvas id="simulation-canvas"></canvas>
+            </div>
+            <div class="panel-header">KONTROLLER</div>
+            <div id="controls-content" class="content-box">
+                <div id="parameters-content" class="parameters-grid">
+                    <!-- Simülasyon parametreleri (hız, saldırganlık vb.) AppController tarafından buraya eklenecek -->
+                </div>
+                <div class="panel-footer" id="controls-footer">
+                    <button id="run-btn" class="control-btn active" aria-label="Simülasyonu Başlat">RUN</button>
+                    <button id="stop-btn" class="control-btn" aria-label="Simülasyonu Durdur">STOP</button>
+                    <button id="reset-btn" class="control-btn" aria-label="Simülasyonu Sıfırla">RESET</button>
+                </div>
+            </div>
+            <div class="panel-header">METRİKLER</div>
+            <div class="metrics-content" id="stats-content">
+                <div id="decision-success-gauge"></div>
+                <div id="avg-energy-chart"></div>
+            </div>
+            <div class="controls-footer" id="param-controls-footer" style="display:none;">
+                <button id="param-revert-btn" class="btn btn-secondary">Geri Al</button>
+                <button id="param-apply-btn" class="btn btn-primary">Uygula</button>
+            </div>
+        </div>
+        <div id="dashboard-container" class="panel right-panel">
+            <div class="panel-header">
+                <h2>İnteraktif Grafikler</h2>
+            </div>
+            <div class="panel-content scrollable" id="charts-content">
+                <div class="chart-container">
+                    <h3>Popülasyon Dinamikleri</h3>
+                    <div id="population-chart"></div>
+                </div>
+                <div class="chart-container">
+                    <h3>Ortalama Fitness</h3>
+                    <div id="fitness-chart"></div>
+                </div>
+                <div class="chart-container">
+                    <h3>Genotip Çeşitliliği</h3>
+                    <div id="diversity-chart"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <div id="connection-status" class="connection-status" style="display: none;"></div>
+    <!-- Ana Uygulama Scripti -->
+    <script type="module" src="src/main.js"></script>
+</body>
+</html> 

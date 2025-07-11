@@ -1,0 +1,101 @@
+Bilimsel Veri Birlikte Çalışabilirliği Detaylı Raporu
+Giriş
+Bilimsel araştırmaların hızla ilerlemesi ve karmaşıklığının artması, üretilen verilerin etkin bir şekilde yönetilmesi, paylaşılması ve yeniden kullanılmasını her zamankinden daha önemli hale getirmiştir. Veri birlikte çalışabilirliği, farklı kaynaklardan gelen verilerin ve bu verileri işleyen sistemlerin anlamlı bir şekilde bir arada çalışabilme yeteneğidir. Bu rapor, bilimsel veri birlikte çalışabilirliğinin temelini oluşturan FAIR prensipleri, bilimsel veri yaşam döngüsü, temel teknik bileşenler ve pratik uygulama adımlarını detaylı bir şekilde ele almaktadır. Amaç, araştırmacılara ve kurumlara verilerini daha değerli, keşfedilebilir ve yeniden kullanılabilir hale getirme konusunda rehberlik etmektir.
+
+1. FAIR Veri Prensipleri
+FAIR prensipleri, verilerin değerini en üst düzeye çıkarmak için bir çerçeve sunar. Bu prensipler, verilerin hem insanlar hem de makineler tarafından kolayca bulunabilir, erişilebilir, birlikte çalışabilir ve yeniden kullanılabilir olmasını hedefler.
+
+F - Bulunabilir (Findable): Verilerin yeniden kullanılabilmesi için öncelikle bulunabilmesi gerekir. Bu, veri setlerine küresel olarak benzersiz ve kalıcı tanımlayıcılar (örneğin, DOI - Digital Object Identifier) atanmasını içerir. Zengin ve makine tarafından okunabilir metaveriler, veri setlerinin arama motorları ve veri havuzları aracılığıyla keşfedilmesini sağlar.
+
+Temel Eylem: Veri setinize kalıcı bir kimlik atayın ve bulunabilir bir kaynakta kaydedin.
+
+A - Erişilebilir (Accessible): Veriler bulunduktan sonra, kullanıcıların bu verilere erişebilmesi gerekir. Bu, verilerin tanımlayıcıları kullanılarak standartlaştırılmış, açık ve ücretsiz bir iletişim protokolü (örneğin, HTTP) aracılığıyla alınabilmesi anlamına gelir. Protokol, gerektiğinde kimlik doğrulama ve yetkilendirme mekanizmalarını da desteklemelidir.
+
+Temel Eylem: Verilerinizi, açık ve net bir erişim protokolü sağlayan bir depoda barındırın.
+
+I - Birlikte Çalışabilir (Interoperable): Birlikte çalışabilirlik, verilerin diğer veri setleriyle birleştirilebilmesi ve farklı uygulamalar veya iş akışları tarafından kullanılabilmesi yeteneğidir. Bu, bilgi temsili için resmi, erişilebilir, paylaşılan ve yaygın olarak uygulanabilir dillerin (kelime dağarcıkları, terminolojiler ve ontolojiler dahil) kullanılmasını gerektirir.
+
+Temel Eylem: Metaverileriniz için topluluk tarafından kabul görmüş veri formatlarını (örneğin, NetCDF, HDF5) ve kontrollü kelime dağarcıklarını kullanın.
+
+R - Yeniden Kullanılabilir (Reusable): FAIR'ın nihai amacı, verilerin yeniden kullanım için optimize edilmesidir. Yeniden kullanılabilir olması için verilerin, çok sayıda doğru ve ilgili özellikle iyi tanımlanması gerekir. Bu, veri kaynağı (kökeni) hakkında net bilgiler ve açık, erişilebilir bir veri kullanım lisansı içerir.
+
+Temel Eylem: Gelecekteki kullanıcıları yönlendirmek için ayrıntılı dokümantasyon ve net bir veri lisansı (örneğin, Creative Commons) sağlayın.
+
+2. Bilimsel Veri Yaşam Döngüsü
+Bilimsel veriler statik değildir; oluşturulma, işlenme, yayınlanma ve yeniden kullanılma aşamalarından oluşan bir yaşam döngüsünden geçerler. Her aşama, FAIR prensiplerinin uygulanması için benzersiz zorluklar ve fırsatlar sunar.
+
+Aşama 1: Üretim (Generation): Bu, verinin doğduğu aşamadır. Deneylerden, gözlemlerden veya simülasyonlardan ilk veri toplama işlemi burada gerçekleşir. Bu aşamada, kullanılan cihazlar, deneysel koşullar veya simülasyon parametreleri gibi mümkün olduğunca fazla bağlamın yakalanması kritik öneme sahiptir. Erken metaveri yakalama, bilgi kaybını önler.
+
+Aşama 2: İşleme ve Depolama (Processing & Storage): Ham veriler genellikle karmaşıktır ve temizlenmesi, normalleştirilmesi ve yapılandırılması gerekir. Bu aşamada doğru dosya formatının seçilmesi hayati önem taşır. Veriyle metaveriyi doğrudan gömmek ve bağlantılı kalmalarını sağlamak için HDF5 veya NetCDF gibi sağlam, kendini tanımlayan formatlar kullanılmalıdır.
+
+Aşama 3: Paylaşım ve Yayınlama (Sharing & Publication): Verilerinizi erişilebilir kılmak için bir paylaşım yöntemine ihtiyacınız vardır. API'ler (Uygulama Programlama Arayüzleri) burada devreye girer. İyi tasarlanmış bir REST API, diğer sistemlerin verilerinizi sorgulaması ve alması için standartlaştırılmış bir yol sağlar. NCBI gibi halka açık veritabanlarıyla entegrasyon, verilerinizin erişimini genişletir.
+
+Aşama 4: Keşif ve Yeniden Kullanım (Discovery & Reuse): Bu, tüm sıkı çalışmanın karşılığının alındığı aşamadır. Verileriniz zengin metaverilerle düzgün bir şekilde tanımlandığında ve erişilebilir bir depoda saklandığında, diğer araştırmacılar onu bulabilir, anlayabilir, güvenebilir ve üzerine yeni çalışmalar inşa edebilir, böylece bilim herkes için hızlanır.
+
+3. Birlikte Çalışabilirlik İçin Temel Bileşenler
+Veri birlikte çalışabilirliğini sağlamak için belirli araçlar ve standartlar gereklidir.
+
+3.1. Bilimsel Dosya Formatları
+Dosya formatı seçimi, uzun vadeli veri erişilebilirliği ve performansı için kritik öneme sahiptir.
+
+HDF5 (Hierarchical Data Format 5): Büyük ve karmaşık veri setleri için tasarlanmıştır. Dahili sıkıştırma, zengin metaveri desteği ve esnek veri yapıları sunar. Özellikle sayısal simülasyonlar ve büyük deneysel veriler için uygundur.
+
+NetCDF (Network Common Data Form): Özellikle iklim bilimi, oşinografi ve atmosfer bilimleri gibi alanlarda yaygın olarak kullanılır. Kendini tanımlayan, taşınabilir ve dizine alınmış bilimsel veriler için bir dizi format ve kütüphane sunar.
+
+BIOM (Biological Observation Matrix): Biyolojik örneklerle ilgili gözlem matrislerini (örneğin, mikrobiyal topluluk verileri) temsil etmek için standartlaştırılmış bir formattır. Genomik ve metagenomik çalışmalarda sıkça kullanılır.
+
+CSV/TSV (Comma/Tab Separated Values): Basit tablo verileri için uygun olsa da, büyük veri setleri, karmaşık veri yapıları ve zengin metaveri desteği açısından sınırlıdırlar.
+
+Bu formatlar, performans, metaveri desteği ve esneklik gibi çeşitli kriterlere göre değerlendirilmelidir. Genellikle HDF5 ve NetCDF, büyük ve karmaşık bilimsel veri setleri için daha üstün özellikler sunar.
+
+3.2. Metadata Standartları
+Metaveri, "veri hakkında veri" anlamına gelir ve bir veri setini anlamak, yorumlamak ve yeniden kullanmak için gereken bağlamı sağlar. Zengin ve standartlaştırılmış metaveri olmadan, veriler sadece sayılardan ibaret kalır.
+
+Önemi: İyi metaveri, bir değerin neyi temsil ettiğini (örneğin, sıcaklık, basınç), hangi birimde ölçüldüğünü, ne zaman ve nasıl ölçüldüğünü açıklar.
+
+Standartlar: Özellikle biyolojik simülasyonlar gibi alanlarda, metaverinin tutarlı ve makine tarafından okunabilir olmasını sağlayan topluluk tarafından kabul görmüş standartlar (örneğin, MIAME, MINSEQE) mevcuttur. Bu standartlara uymak, verilerin daha geniş bir kitle tarafından anlaşılmasını ve entegre edilmesini kolaylaştırır.
+
+3.3. API Tasarımı ve Veritabanı Entegrasyonu
+API'ler (Uygulama Programlama Arayüzleri), farklı yazılım sistemlerinin birbirleriyle iletişim kurmasını sağlayan köprülerdir.
+
+API Rolü: İyi tasarlanmış bir API, verilerin programatik olarak paylaşılması, otomasyonun sağlanması ve NCBI (Ulusal Biyoteknoloji Bilgi Merkezi) veya UniProt gibi halka açık bilimsel veritabanlarıyla entegrasyon için hayati öneme sahiptir. API'ler, veri taleplerini, kimlik doğrulamayı ve veri formatlamayı yönetebilir.
+
+Veritabanı Entegrasyonu: Verilerinizi halka açık veritabanlarına entegre etmek, görünürlüğünü artırır ve küresel bilim topluluğu tarafından keşfedilmesini ve kullanılmasını sağlar. API'ler, bu entegrasyon sürecini kolaylaştırır.
+
+4. FAIR Uygulama Kontrol Listesi
+Araştırma verilerinizi daha FAIR hale getirmek için aşağıdaki eyleme geçirilebilir adımları göz önünde bulundurun:
+
+Bulunabilirlik (Findable):
+
+[ ] Veri setine küresel olarak benzersiz ve kalıcı bir tanımlayıcı (örneğin, DOI) atanmıştır.
+
+[ ] Veriler, zengin ve makine tarafından okunabilir metaverilerle tanımlanmıştır.
+
+[ ] Metaveriler, aranabilir bir kaynakta (örneğin, bir veri havuzu) kaydedilmiş veya dizine eklenmiştir.
+
+Erişilebilirlik (Accessible):
+
+[ ] Veriler, tanımlayıcısı kullanılarak standart bir protokol aracılığıyla alınabilir.
+
+[ ] Protokol açık, ücretsiz ve evrensel olarak uygulanabilirdir (örneğin, HTTPS).
+
+[ ] Gerekirse, kimlik doğrulama ve yetkilendirme mekanizmaları mevcuttur.
+
+Birlikte Çalışabilirlik (Interoperable):
+
+[ ] Metaveriler, resmi, paylaşılan ve yaygın olarak uygulanabilir bir dil (kelime dağarcıkları, ontolojiler) kullanır.
+
+[ ] Veriler, topluluk tarafından kabul görmüş bir dosya formatında (örneğin, HDF5, NetCDF, BIOM) saklanır.
+
+[ ] Kullanılan kelime dağarcıkları FAIR prensiplerine uygundur.
+
+Yeniden Kullanılabilirlik (Reusable):
+
+[ ] Metaveriler, verinin kökeni hakkında net bilgiler (provenans) içerir.
+
+[ ] Açık ve erişilebilir bir veri kullanım lisansı belirtilmiştir (örneğin, Creative Commons).
+
+[ ] Veri setinin anlaşılması ve yeniden kullanılması için yeterli dokümantasyon sağlanmıştır.
+
+Sonuç
+Bilimsel verilerin FAIR prensiplerine uygun olarak yönetilmesi ve paylaşılması, bilimsel keşifleri hızlandırmak, işbirliklerini artırmak ve araştırmanın etkisini en üst düzeye çıkarmak için kritik bir yaklaşımdır. Bu raporda özetlenen prensipler, yaşam döngüsü aşamaları ve teknik bileşenler, araştırmacılara ve kurumlara bu hedefe ulaşmaları için bir yol haritası sunmaktadır. Veri birlikte çalışabilirliğine yapılan yatırım, bilimin geleceğine yapılan bir yatırımdır.
